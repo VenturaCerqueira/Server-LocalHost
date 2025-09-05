@@ -7,6 +7,8 @@ import threading
 import time
 import logging
 import os
+import subprocess
+import tempfile
 from typing import Dict, List, Any, Optional, Tuple
 from contextlib import contextmanager
 
@@ -244,6 +246,163 @@ class DatabaseOptimizer:
                 except:
                     pass
             self._connection_pool.clear()
+
+def list_local_mysql_databases(config) -> Dict[str, Any]:
+    """
+    Lista bancos de dados MySQL locais (XAMPP)
+    """
+    local_user = 'root'
+    local_password = ''
+
+    try:
+        # Comando para listar bancos
+        cmd = [
+            'mysql',
+            '-u', local_user,
+            f'-p{local_password}' if local_password else '',
+            '-e', 'SHOW DATABASES;'
+        ]
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True
+        )
+
+        if result.returncode != 0:
+            error_msg = result.stderr.strip()
+            logger.error(f"Erro ao listar bancos locais: {error_msg}")
+            return {
+                'success': False,
+                'error': f'Falha ao listar bancos locais: {error_msg}',
+                'databases': []
+            }
+
+        # Parse output - skip header and system databases
+        lines = result.stdout.strip().split('\n')[1:]  # Skip header
+        databases = []
+        system_dbs = {'information_schema', 'mysql', 'performance_schema', 'sys', 'phpmyadmin'}
+
+        for line in lines:
+            db_name = line.strip()
+            if db_name and db_name not in system_dbs:
+                databases.append(db_name)
+
+        return {
+            'success': True,
+            'databases': databases,
+            'count': len(databases)
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao listar bancos locais: {str(e)}")
+        return {
+            'success': False,
+            'error': f'Erro inesperado: {str(e)}',
+            'databases': []
+        }
+
+def sync_mysql_production_to_local(db_name: str, config) -> Dict[str, Any]:
+    """
+    Sincroniza banco de dados MySQL da produção para localhost (XAMPP)
+    """
+    # Credenciais de produção
+    prod_host = config.get('PROD_DB_HOST')
+    prod_user = config.get('PROD_DB_USER')
+    prod_password = config.get('PROD_DB_PASSWORD')
+    prod_port = config.get('PROD_DB_PORT', 3306)
+
+    # Credenciais locais (XAMPP padrão)
+    local_user = 'root'
+    local_password = ''
+
+    if not all([prod_host, prod_user, prod_password]):
+        return {
+            'success': False,
+            'error': 'Credenciais de produção não configuradas'
+        }
+
+    # Cria arquivo temporário para o dump
+    with tempfile.NamedTemporaryFile(mode='w+', suffix='.sql', delete=False) as temp_file:
+        temp_path = temp_file.name
+
+    try:
+        logger.info(f"Iniciando sincronização do banco {db_name} da produção para localhost")
+
+        # Comando mysqldump para produção
+        dump_cmd = [
+            'mysqldump',
+            '-h', prod_host,
+            '-P', str(prod_port),
+            '-u', prod_user,
+            f'-p{prod_password}',
+            db_name
+        ]
+
+        logger.info(f"Comando dump: {' '.join(dump_cmd[:-1])} -p**** {db_name}")
+
+        # Executa dump
+        with open(temp_path, 'w') as dump_file:
+            result = subprocess.run(
+                dump_cmd,
+                stdout=dump_file,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+        if result.returncode != 0:
+            error_msg = result.stderr.strip()
+            logger.error(f"Erro no dump: {error_msg}")
+            return {
+                'success': False,
+                'error': f'Falha no dump da produção: {error_msg}'
+            }
+
+        logger.info("Dump da produção concluído com sucesso")
+
+        # Comando mysql para restaurar localmente
+        restore_cmd = [
+            'mysql',
+            '-u', local_user,
+            f'-p{local_password}' if local_password else '',
+            db_name
+        ]
+
+        # Executa restore
+        with open(temp_path, 'r') as dump_file:
+            result = subprocess.run(
+                restore_cmd,
+                stdin=dump_file,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+        if result.returncode != 0:
+            error_msg = result.stderr.strip()
+            logger.error(f"Erro na restauração: {error_msg}")
+            return {
+                'success': False,
+                'error': f'Falha na restauração local: {error_msg}'
+            }
+
+        logger.info(f"Sincronização do banco {db_name} concluída com sucesso")
+        return {
+            'success': True,
+            'message': f'Banco de dados {db_name} sincronizado com sucesso da produção para localhost'
+        }
+
+    except Exception as e:
+        logger.error(f"Erro durante sincronização: {str(e)}")
+        return {
+            'success': False,
+            'error': f'Erro inesperado: {str(e)}'
+        }
+
+    finally:
+        # Remove arquivo temporário
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
 
 # Instância global será criada no app initialization
 db_optimizer = None

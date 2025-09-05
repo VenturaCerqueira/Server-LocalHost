@@ -24,41 +24,31 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6">
-                            <div class="card border-left-primary shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                                Usuários Cadastrados
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ db_stats.user_count if db_stats else 0 }}</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="bi bi-people-fill fa-2x text-primary"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="card border-left-success shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                Tamanho do Banco
-                                            </div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ db_stats.db_size_mb if db_stats else 0 }} MB</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="bi bi-database-fill fa-2x text-success"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+<div class="col-12">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Bancos de Dados MySQL Locais (XAMPP)</h6>
+        </div>
+        <div class="card-body">
+            {% if mysql_dbs.success %}
+                <ul class="list-group">
+                    {% for db_name in mysql_dbs.databases %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ db_name }}
+                            <form method="post" action="{{ url_for('api.sync_db', db_name=db_name) }}" onsubmit="return confirm('Deseja sincronizar o banco {{ db_name }} com a produção?');">
+                                <button type="submit" class="btn btn-sm btn-primary">Sincronizar</button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="alert alert-danger" role="alert">
+                    Erro ao listar bancos de dados locais: {{ mysql_dbs.error }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
                     </div>
                 </div>
             </div>

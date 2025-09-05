@@ -57,17 +57,41 @@ def browse(sub_path):
 @main_bp.route('/databases')
 @login_required
 def databases():
-    # Database management page with real data
+    # Database management page with MySQL databases from XAMPP
     dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
-    db_stats = db_service.db_optimizer.get_database_stats()
-    return render_template('databases.html', dados_servidor=dados_servidor, db_stats=db_stats)
+    mysql_dbs = db_service.list_local_mysql_databases(current_app.config)
+    return render_template('databases.html', dados_servidor=dados_servidor, mysql_dbs=mysql_dbs)
 
 @main_bp.route('/sistemas')
 @login_required
 def sistemas():
-    # Systems management page
+    # Systems management page pointing to XAMPP htdocs
+    from servidor_app.models.file_system_model import FileSystemModel
+    import os
+
+    current_path = request.args.get('path', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 50, type=int)
+
+    root_dir = current_app.config['SISTEMAS_DIR']
+    fs_model = FileSystemModel(root_dir)
+    try:
+        full_path = os.path.join(root_dir, current_path)
+        if not os.path.exists(full_path):
+            flash(f"Diretório não encontrado: {full_path}", "danger")
+            pastas = []
+            pagination = None
+            parent_path = None
+        else:
+            pastas, current_path, parent_path, pagination = fs_model.list_directory(current_path, page, per_page)
+    except Exception as e:
+        flash(f"Erro ao listar diretório: {e}", "danger")
+        pastas = []
+        pagination = None
+        parent_path = None
+
     dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
-    return render_template('sistemas.html', dados_servidor=dados_servidor)
+    return render_template('sistemas.html', current_path=current_path, pastas=pastas, pagination=pagination, parent_path=parent_path, dados_servidor=dados_servidor)
 
 @main_bp.route('/metrics')
 @login_required

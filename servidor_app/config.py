@@ -36,9 +36,9 @@ class Config:
 
     # Credenciais do banco de dados de produção
     # Para desenvolvimento, permite valores vazios com aviso
-    PROD_DB_HOST = os.environ.get('PROD_DB_HOST')
-    PROD_DB_USER = os.environ.get('PROD_DB_USER')
-    PROD_DB_PASSWORD = os.environ.get('PROD_DB_PASSWORD')
+    PROD_DB_HOST = os.environ.get('PROD_DB_HOST') or 'db-keepsistemas-sql8.c3emmyqhonte.sa-east-1.rds.amazonaws.com'
+    PROD_DB_USER = os.environ.get('PROD_DB_USER') or 'anderson'
+    PROD_DB_PASSWORD = os.environ.get('PROD_DB_PASSWORD') or '126303@Acv'
     PROD_DB_PORT = os.environ.get('PROD_DB_PORT') or 3306
 
     # Validação das credenciais críticas apenas se pelo menos uma estiver definida
