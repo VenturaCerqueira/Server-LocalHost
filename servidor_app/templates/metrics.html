@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Métricas{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">
+                    <i class="bi bi-graph-up me-2"></i>Métricas
+                </h1>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Monitoramento de Métricas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Funcionalidade em desenvolvimento</strong><br>
+                        Esta página será implementada em breve com gráficos e métricas detalhadas do sistema.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card border-left-primary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                CPU Usage
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ system_resources.cpu_percent if system_resources else 0 }}%</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="bi bi-cpu-fill fa-2x text-primary"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card border-left-success shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                Memory Usage
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ system_resources.memory_percent if system_resources else 0 }}%</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="bi bi-memory fa-2x text-success"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card border-left-info shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                Disk Usage
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ dados_servidor.disk_percent if dados_servidor else 0 }}%</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="bi bi-hdd-fill fa-2x text-info"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

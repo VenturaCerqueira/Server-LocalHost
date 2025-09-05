@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Banco de Dados{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">
+                    <i class="bi bi-database me-2"></i>Banco de Dados
+                </h1>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Gerenciamento de Banco de Dados</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Funcionalidade em desenvolvimento</strong><br>
+                        Esta página será implementada em breve com funcionalidades completas de gerenciamento de banco de dados.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-left-primary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                Usuários Cadastrados
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ db_stats.user_count if db_stats else 0 }}</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="bi bi-people-fill fa-2x text-primary"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card border-left-success shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                Tamanho do Banco
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ db_stats.db_size_mb if db_stats else 0 }} MB</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="bi bi-database-fill fa-2x text-success"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

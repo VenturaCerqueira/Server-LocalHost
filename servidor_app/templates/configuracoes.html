@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Configurações</h2>
+    <form method="post" class="card card-elegant p-4 mt-3" novalidate>
+        <div class="mb-3">
+            <label for="username" class="form-label">Novo nome de usuário</label>
+            <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="current_password" class="form-label">Senha atual</label>
+            <input type="password" class="form-control" id="current_password" name="current_password" required>
+        </div>
+        <div class="mb-3">
+            <label for="new_password" class="form-label">Nova senha</label>
+            <input type="password" class="form-control" id="new_password" name="new_password" required>
+        </div>
+        <div class="mb-3">
+            <label for="confirm_password" class="form-label">Confirme a nova senha</label>
+            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Salvar alterações</button>
+    </form>
+</div>
+{% endblock %}

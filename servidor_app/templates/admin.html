@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Administração - {{ config.APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        {% include 'partials/_sidebar.html' %}
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Administração do Sistema</h1>
+            </div>
+
+            <!-- Flash messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Users Management -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Gerenciamento de Usuários</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Usuário</th>
+                                    <th>Status</th>
+                                    <th>Data de Criação</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">Ativo</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Bloqueado</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.id }}</td> <!-- Placeholder for creation date -->
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <form method="POST" action="{{ url_for('main.toggle_user', user_id=user.id) }}" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm {% if user.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                                                    {% if user.is_active %}
+                                                        <i class="fas fa-ban"></i> Bloquear
+                                                    {% else %}
+                                                        <i class="fas fa-check"></i> Desbloquear
+                                                    {% endif %}
+                                                </button>
+                                            </form>
+                                            {% if user.username != 'keep' %}
+                                            <form method="POST" action="{{ url_for('main.delete_user', user_id=user.id) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir o usuário {{ user.username }}?')">
+                                                <button type="submit" class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash"></i> Excluir
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Statistics -->
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title">Total de Usuários</h5>
+                            <h2 class="text-primary">{{ users|length }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title">Usuários Ativos</h5>
+                            <h2 class="text-success">{{ users|selectattr('is_active')|list|length }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h5 class="card-title">Usuários Bloqueados</h5>
+                            <h2 class="text-danger">{{ users|rejectattr('is_active')|list|length }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add confirmation for delete actions
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('button[type="submit"][class*="btn-danger"]');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            const userName = this.closest('tr').querySelector('td:nth-child(2)').textContent;
+            if (!confirm(`Tem certeza que deseja excluir o usuário "${userName}"? Esta ação não pode ser desfeita.`)) {
+                e.preventDefault();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
