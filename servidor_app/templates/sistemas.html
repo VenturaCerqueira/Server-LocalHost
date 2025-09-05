@@ -16,12 +16,6 @@
                     </h1>
                 </div>
                 <div>
-                    <button id="view-toggle-btn" class="btn btn-secondary me-2" title="Alternar visualização">
-                        <i class="bi bi-list-ul"></i> Lista
-                    </button>
-                    <button id="git-pull-btn" class="btn btn-success btn-lg animate__animated animate__pulse">
-                        <i class="bi bi-arrow-down-circle-fill me-2"></i>Atualizar Projeto (Git Pull)
-                    </button>
                 </div>
             </div>
 
@@ -180,34 +174,40 @@
 </style>
 
 <script>
-document.getElementById('git-pull-btn').addEventListener('click', function() {
-    const modal = new bootstrap.Modal(document.getElementById('gitPullModal'));
-    modal.show();
+document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('git-pull-project-btn') || event.target.closest('.git-pull-project-btn')) {
+        const button = event.target.classList.contains('git-pull-project-btn') ? event.target : event.target.closest('.git-pull-project-btn');
+        const projectPath = button.getAttribute('data-project');
 
-    fetch('/api/git_pull', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('git-pull-status').style.display = 'none';
-        document.getElementById('git-pull-result').style.display = 'block';
-        document.getElementById('git-output').textContent = data.output || data.error || 'Erro desconhecido';
+        const modal = new bootstrap.Modal(document.getElementById('gitPullModal'));
+        modal.show();
 
-        if (data.success) {
-            document.getElementById('git-output').classList.add('text-success');
-        } else {
+        fetch('/api/git_pull_project', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ project_path: projectPath })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('git-pull-status').style.display = 'none';
+            document.getElementById('git-pull-result').style.display = 'block';
+            document.getElementById('git-output').textContent = data.output || data.error || 'Erro desconhecido';
+
+            if (data.success) {
+                document.getElementById('git-output').classList.add('text-success');
+            } else {
+                document.getElementById('git-output').classList.add('text-danger');
+            }
+        })
+        .catch(error => {
+            document.getElementById('git-pull-status').style.display = 'none';
+            document.getElementById('git-pull-result').style.display = 'block';
+            document.getElementById('git-output').textContent = 'Erro ao conectar com o servidor';
             document.getElementById('git-output').classList.add('text-danger');
-        }
-    })
-    .catch(error => {
-        document.getElementById('git-pull-status').style.display = 'none';
-        document.getElementById('git-pull-result').style.display = 'block';
-        document.getElementById('git-output').textContent = 'Erro ao conectar com o servidor';
-        document.getElementById('git-output').classList.add('text-danger');
-    });
+        });
+    }
 });
 </script>
 {% endblock %}

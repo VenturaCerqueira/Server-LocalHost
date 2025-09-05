@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg fixed-top">
     <div class="container-fluid">
-        <button class="btn btn-link me-2" id="sidebar-toggle" style="color: var(--primary-color);">
+        <button class="btn btn-link me-2 sidebar-toggle-btn" id="sidebar-toggle">
             <i class="bi bi-list"></i>
         </button>
 
@@ -35,7 +35,7 @@
                 {% if current_user.username == 'keep' %}
                 <li class="nav-item">
                     <a class="nav-link nav-link-loader" href="{{ url_for('main.admin') }}" title="Administração">
-                        <i class="bi bi-shield-check" style="font-size: 1.2rem;"></i>
+                        <i class="bi bi-shield-check nav-icon-lg"></i>
                     </a>
                 </li>
                 {% endif %}
@@ -57,7 +57,7 @@
                 
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('main.logout') }}" title="Sair">
-                        <i class="bi bi-box-arrow-right" style="font-size: 1.2rem;"></i>
+                        <i class="bi bi-box-arrow-right nav-icon-lg"></i>
                     </a>
                 </li>
             </ul>

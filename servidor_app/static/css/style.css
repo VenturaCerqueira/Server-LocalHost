@@ -1126,6 +1126,19 @@ body {
     background: var(--primary-color) !important;
 }
 
+/* Standardized Icon Classes */
+.nav-icon-lg {
+    font-size: 1.2rem !important;
+}
+
+.sidebar-toggle-btn {
+    color: var(--primary-color) !important;
+}
+
+.sidebar-toggle-btn:hover {
+    color: var(--primary-color-dark) !important;
+}
+
 /* Modern Focus States */
 button:focus,
 input:focus,
