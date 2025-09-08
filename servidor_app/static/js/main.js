@@ -80,41 +80,49 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Common elements and functions for all pages
-    const sidebar = document.getElementById('sidebar');
-    const sidebarToggle = document.getElementById('sidebar-toggle');
-    const mainContent = document.getElementById('main-content');
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const searchModal = document.getElementById('search-modal');
-    const searchOverlay = document.getElementById('search-overlay');
-    const searchToggle = document.getElementById('search-toggle');
-    const searchInput = document.getElementById('search-input');
-    const searchResultsList = document.getElementById('search-results-list');
-    const propertiesModal = document.getElementById('propertiesModal');
-    const themeToggle = document.getElementById('theme-toggle');
-    const themeIcon = themeToggle ? themeToggle.querySelector('i') : null;
+// Common elements and functions for all pages
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const mainContent = document.getElementById('main-content');
+const loadingOverlay = document.getElementById('loading-overlay');
+const searchModal = document.getElementById('search-modal');
+const searchOverlay = document.getElementById('search-overlay');
+const searchToggle = document.getElementById('search-toggle');
+const searchInput = document.getElementById('search-input');
+const searchResultsList = document.getElementById('search-results-list');
+const propertiesModal = document.getElementById('propertiesModal');
+const themeToggle = document.getElementById('theme-toggle');
+const themeIcon = themeToggle ? themeToggle.querySelector('i') : null;
 
-    let isSidebarCollapsed = false;
+let isSidebarCollapsed = false;
 
-    // Lógica do Sidebar
-    const updateSidebarState = () => {
-        if (isSidebarCollapsed) {
-            document.body.classList.add('body-collapsed');
-        } else {
-            document.body.classList.remove('body-collapsed');
-        }
-    };
-
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', () => {
-            isSidebarCollapsed = !isSidebarCollapsed;
-            updateSidebarState();
-
-            // Add animation to sidebar toggle
-            sidebarToggle.classList.add('bounceIn');
-            setTimeout(() => sidebarToggle.classList.remove('bounceIn'), 800);
-        });
+// Lógica do Sidebar
+const updateSidebarState = () => {
+    if (isSidebarCollapsed) {
+        document.body.classList.add('body-collapsed');
+    } else {
+        document.body.classList.remove('body-collapsed');
     }
+};
+
+if (sidebarToggle) {
+    sidebarToggle.addEventListener('click', () => {
+        isSidebarCollapsed = !isSidebarCollapsed;
+        updateSidebarState();
+
+        // Add animation to sidebar toggle
+        sidebarToggle.classList.add('bounceIn');
+        setTimeout(() => sidebarToggle.classList.remove('bounceIn'), 800);
+    });
+}
+
+// Fix back button in sistemas.html
+const backBtn = document.getElementById('back-btn');
+if (backBtn) {
+    backBtn.addEventListener('click', () => {
+        window.history.back();
+    });
+}
 
     // Lógica do Theme Toggle
     const isDarkMode = localStorage.getItem('dark-mode') === 'true';

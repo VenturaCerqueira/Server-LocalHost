@@ -1,5 +1,5 @@
 # servidor_app/controllers/api_controller.py
-from flask import Blueprint, jsonify, current_app, request
+from flask import Blueprint, jsonify, current_app, request, send_file
 from servidor_app.models.file_system_model import FileSystemModel
 from servidor_app.services.server_info_service import get_server_info
 import servidor_app.services.database_service as db_service
@@ -105,3 +105,69 @@ def git_pull_project():
     except Exception as e:
         current_app.logger.error(f"Erro no git pull do projeto: {e}")
         return jsonify({"error": f"Erro interno no git pull do projeto: {str(e)}"}), 500
+
+@api_bp.route('/git_clone', methods=['POST'])
+def git_clone():
+    try:
+        import subprocess
+        import os
+        from urllib.parse import urlparse
+        data = request.get_json()
+        repo_url = data.get('repo_url')
+        if not repo_url:
+            return jsonify({"error": "URL do repositório é obrigatória"}), 400
+
+        # Extract repository name from URL
+        parsed_url = urlparse(repo_url)
+        repo_name = os.path.splitext(os.path.basename(parsed_url.path))[0]
+        if not repo_name:
+            return jsonify({"error": "Não foi possível extrair o nome do repositório da URL"}), 400
+
+        # Construct absolute path using repo name
+        base_dir = current_app.config.get('SISTEMAS_DIR', current_app.root_path)
+        abs_path = os.path.abspath(os.path.join(base_dir, repo_name))
+        if not abs_path.startswith(os.path.abspath(base_dir)):
+            return jsonify({"error": "Acesso negado ao caminho de destino"}), 403
+
+        # Ensure the base directory exists
+        if not os.path.exists(base_dir):
+            os.makedirs(base_dir, exist_ok=True)
+
+        # Execute git clone
+        result = subprocess.run(['git', 'clone', repo_url, abs_path], capture_output=True, text=True)
+        if result.returncode == 0:
+            return jsonify({"message": f"Repositório clonado com sucesso em {repo_name}", "output": result.stdout, "success": True}), 200
+        else:
+            return jsonify({"message": f"Erro ao clonar repositório", "output": result.stderr, "success": False}), 500
+    except Exception as e:
+        current_app.logger.error(f"Erro no git clone: {e}")
+        return jsonify({"error": f"Erro interno no git clone: {str(e)}"}), 500
+
+@api_bp.route('/download_folder/<path:folder_path>')
+def download_folder(folder_path):
+    try:
+        import zipfile
+        import io
+        base_dir = current_app.config.get('SISTEMAS_DIR', current_app.root_path)
+        abs_path = os.path.abspath(os.path.join(base_dir, folder_path))
+        if not abs_path.startswith(os.path.abspath(base_dir)):
+            return jsonify({"error": "Acesso negado"}), 403
+
+        if not os.path.exists(abs_path) or not os.path.isdir(abs_path):
+            return jsonify({"error": "Pasta não encontrada"}), 404
+
+        # Create zip file in memory
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for root, dirs, files in os.walk(abs_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arcname = os.path.relpath(file_path, abs_path)
+                    zip_file.write(file_path, arcname)
+
+        zip_buffer.seek(0)
+        folder_name = os.path.basename(abs_path)
+        return send_file(zip_buffer, as_attachment=True, download_name=f"{folder_name}.zip", mimetype='application/zip')
+    except Exception as e:
+        current_app.logger.error(f"Erro no download da pasta {folder_path}: {e}")
+        return jsonify({"error": f"Erro interno no download: {str(e)}"}), 500

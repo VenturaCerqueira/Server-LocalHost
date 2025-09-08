@@ -1,133 +1,59 @@
 {
-  "total_requests": 56,
-  "total_response_time": 17.474551916122437,
+  "total_requests": 8,
+  "total_response_time": 0.5444860458374023,
   "endpoint_metrics": {
     "GET main.index": {
-      "count": 4,
-      "total_time": 0.17542147636413574,
-      "avg_time": 0.043855369091033936,
-      "min_time": 0.0006916522979736328,
-      "max_time": 0.11237239837646484,
+      "count": 2,
+      "total_time": 0.11173486709594727,
+      "avg_time": 0.05586743354797363,
+      "min_time": 0.0005614757537841797,
+      "max_time": 0.11117339134216309,
       "status_codes": {
         "302": 1,
-        "200": 3
+        "200": 1
       }
     },
     "GET main.login": {
-      "count": 2,
-      "total_time": 0.04429769515991211,
-      "avg_time": 0.022148847579956055,
-      "min_time": 0.0006401538848876953,
-      "max_time": 0.043657541275024414,
+      "count": 1,
+      "total_time": 0.027769088745117188,
+      "avg_time": 0.027769088745117188,
+      "min_time": 0.027769088745117188,
+      "max_time": 0.027769088745117188,
       "status_codes": {
-        "200": 2
-      }
-    },
-    "GET main.perfil": {
-      "count": 2,
-      "total_time": 0.0055124759674072266,
-      "avg_time": 0.0027562379837036133,
-      "min_time": 0.0004756450653076172,
-      "max_time": 0.005036830902099609,
-      "status_codes": {
-        "302": 1,
         "200": 1
       }
     },
     "POST main.login": {
       "count": 1,
-      "total_time": 0.8806564807891846,
-      "avg_time": 0.8806564807891846,
-      "min_time": 0.8806564807891846,
-      "max_time": 0.8806564807891846,
+      "total_time": 0.23610877990722656,
+      "avg_time": 0.23610877990722656,
+      "min_time": 0.23610877990722656,
+      "max_time": 0.23610877990722656,
       "status_codes": {
         "302": 1
       }
     },
     "GET static": {
-      "count": 31,
-      "total_time": 0.2198958396911621,
-      "avg_time": 0.007093414183585874,
-      "min_time": 0.000522613525390625,
-      "max_time": 0.14448046684265137,
+      "count": 3,
+      "total_time": 0.0803365707397461,
+      "avg_time": 0.0267788569132487,
+      "min_time": 0.0004837512969970703,
+      "max_time": 0.07905936241149902,
       "status_codes": {
-        "304": 31
-      }
-    },
-    "GET main.configuracoes": {
-      "count": 1,
-      "total_time": 0.014957666397094727,
-      "avg_time": 0.014957666397094727,
-      "min_time": 0.014957666397094727,
-      "max_time": 0.014957666397094727,
-      "status_codes": {
-        "200": 1
-      }
-    },
-    "POST main.configuracoes": {
-      "count": 1,
-      "total_time": 0.614346981048584,
-      "avg_time": 0.614346981048584,
-      "min_time": 0.614346981048584,
-      "max_time": 0.614346981048584,
-      "status_codes": {
-        "302": 1
-      }
-    },
-    "GET main.databases": {
-      "count": 1,
-      "total_time": 2.2163405418395996,
-      "avg_time": 2.2163405418395996,
-      "min_time": 2.2163405418395996,
-      "max_time": 2.2163405418395996,
-      "status_codes": {
-        "200": 1
-      }
-    },
-    "GET main.metrics": {
-      "count": 2,
-      "total_time": 0.2240757942199707,
-      "avg_time": 0.11203789710998535,
-      "min_time": 0.10603642463684082,
-      "max_time": 0.11803936958312988,
-      "status_codes": {
-        "200": 2
+        "304": 3
       }
     },
     "GET main.sistemas": {
-      "count": 9,
-      "total_time": 0.6973536014556885,
-      "avg_time": 0.07748373349507649,
-      "min_time": 0.0023899078369140625,
-      "max_time": 0.43530750274658203,
+      "count": 1,
+      "total_time": 0.08853673934936523,
+      "avg_time": 0.08853673934936523,
+      "min_time": 0.08853673934936523,
+      "max_time": 0.08853673934936523,
       "status_codes": {
-        "200": 9
-      }
-    },
-    "POST api.git_pull_project": {
-      "count": 2,
-      "total_time": 12.381693363189697,
-      "avg_time": 6.190846681594849,
-      "min_time": 4.630563735961914,
-      "max_time": 7.751129627227783,
-      "status_codes": {
-        "200": 2
+        "200": 1
       }
     }
   },
-  "slow_requests": [
-    {
-      "timestamp": "2025-09-08T11:42:29.659189",
-      "endpoint": "POST api.git_pull_project",
-      "response_time": 7.751129627227783,
-      "status_code": 200
-    }
-  ],
-  "alerts": [
-    {
-      "timestamp": "2025-09-08T11:42:29.659472",
-      "message": "Endpoint POST api.git_pull_project is responding slowly (>5s)",
-      "severity": "warning"
-    }
-  ]
+  "slow_requests": [],
+  "alerts": []
 }

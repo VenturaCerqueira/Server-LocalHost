@@ -118,6 +118,42 @@
     </div>
 </div>
 
+<!-- Git Clone Modal -->
+<div class="modal fade" id="gitCloneModal" tabindex="-1" aria-labelledby="gitCloneModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="gitCloneModalLabel">
+                    <i class="bi bi-cloud-download me-2"></i>Git Clone
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="git-clone-form">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="repo-url" class="form-label">URL do Repositório Git</label>
+                        <input type="url" class="form-control" id="repo-url" name="repo_url" placeholder="https://github.com/usuario/repositorio.git" required>
+                    </div>
+
+                    <div id="git-clone-status" class="text-center" style="display:none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Clonando...</span>
+                        </div>
+                        <p class="mt-2">Executando git clone...</p>
+                    </div>
+                    <div id="git-clone-result" style="display:none;">
+                        <pre id="git-clone-output" class="bg-light p-3 rounded"></pre>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn btn-primary">Clonar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="newFolderModal" tabindex="-1" aria-labelledby="newFolderModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content card-elegant-upload">
