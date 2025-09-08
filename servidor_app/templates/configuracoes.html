@@ -3,6 +3,18 @@
 {% block content %}
 <div class="container mt-5">
     <h2>Configurações</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'danger' else 'info' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
     <form method="post" class="card card-elegant p-4 mt-3" novalidate>
         <div class="mb-3">
             <label for="username" class="form-label">Novo nome de usuário</label>

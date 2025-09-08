@@ -372,6 +372,7 @@ def download(file_path):
     else:
         # If it's a file, send it directly
         directory = os.path.dirname(full_path)
+        return send_from_directory(directory, os.path.basename(full_path), as_attachment=True)
 
 @main_bp.app_errorhandler(404)
 def page_not_found(e):

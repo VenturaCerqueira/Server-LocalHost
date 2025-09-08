@@ -596,7 +596,12 @@ document.addEventListener('click', function(e) {
         // Show move modal
         document.getElementById('move-source-path').value = itemPath;
         document.getElementById('move-item-name').textContent = itemName;
-        document.getElementById('move-destination-path').value = '';
+
+        // Pre-fill destination path with current directory or suggest a valid path
+        const currentPath = window.location.pathname.includes('/browse/')
+            ? decodeURIComponent(window.location.pathname.split('/browse/')[1])
+            : '';
+        document.getElementById('move-destination-path').value = currentPath || '';
 
         const moveModal = new bootstrap.Modal(document.getElementById('moveModal'));
         moveModal.show();

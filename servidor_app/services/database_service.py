@@ -255,9 +255,12 @@ def list_local_mysql_databases(config) -> Dict[str, Any]:
     local_password = ''
 
     try:
+        # Caminho completo para o executável MySQL do XAMPP
+        mysql_path = r'D:\Servidor\xampp\mysql\bin\mysql.exe'
+
         # Comando para listar bancos
         cmd = [
-            'mysql',
+            mysql_path,
             '-u', local_user,
             f'-p{local_password}' if local_password else '',
             '-e', 'SHOW DATABASES;'
