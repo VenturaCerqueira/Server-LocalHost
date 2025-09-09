@@ -38,7 +38,7 @@ class Config:
     LICITACOES_DIR = os.environ.get('LICITACOES_DIR') or 'D:/Servidor/Licitações'
 
     # Diretório para Dropbox
-    DROPBOX_DIR = os.environ.get('DROPBOX_DIR') or r'C:\Users\desen\Dropbox'
+    DROPBOX_DIR = os.environ.get('DROPBOX_DIR') or r'\\ANDERSON-VENTUR\Users\desen\Dropbox'
 
     # Credenciais do banco de dados de produção
     # Para desenvolvimento, permite valores vazios com aviso
@@ -66,6 +66,9 @@ class Config:
 
     if not os.path.exists(LICITACOES_DIR):
         print(f"AVISO: O diretório de licitações '{LICITACOES_DIR}' não existe. Funcionalidades de licitações estarão limitadas.")
+
+    if not os.path.exists(DROPBOX_DIR):
+        print(f"AVISO: O diretório Dropbox '{DROPBOX_DIR}' não existe. Funcionalidades do Dropbox estarão limitadas.")
 
     # Validação de porta do banco de dados
     try:

@@ -78,6 +78,71 @@
                             </div>
                         </div>
                     </div>
+
+                    <hr>
+
+                    <h5 class="mb-4">Informações do Servidor</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card border-left-primary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                Versão PHP
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ dados_servidor.php_version if dados_servidor else 'N/A' }}</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="bi bi-code-slash fa-2x text-primary"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card border-left-success shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                Versão MySQL
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ dados_servidor.mysql_version if dados_servidor else 'N/A' }}</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="bi bi-database fa-2x text-success"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card {% if dados_servidor and dados_servidor.xampp_running %}border-left-success{% else %}border-left-danger{% endif %} shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold {% if dados_servidor and dados_servidor.xampp_running %}text-success{% else %}text-danger{% endif %} text-uppercase mb-1">
+                                                Status XAMPP
+                                            </div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                                {% if dados_servidor and dados_servidor.xampp_running %}
+                                                    <span class="text-success">Rodando</span>
+                                                {% else %}
+                                                    <span class="text-danger">Parado</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="bi bi-server fa-2x {% if dados_servidor and dados_servidor.xampp_running %}text-success{% else %}text-danger{% endif %}"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
