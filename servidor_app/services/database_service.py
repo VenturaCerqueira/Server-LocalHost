@@ -332,17 +332,20 @@ def sync_mysql_production_to_local(db_name: str, config) -> Dict[str, Any]:
     try:
         logger.info(f"Iniciando sincronização do banco {db_name} da produção para localhost")
 
-        # Comando mysqldump para produção
+        # Comando mysqldump para produção (usando MYSQL_PWD para segurança)
         dump_cmd = [
             'mysqldump',
             '-h', prod_host,
             '-P', str(prod_port),
             '-u', prod_user,
-            f'-p{prod_password}',
             db_name
         ]
 
-        logger.info(f"Comando dump: {' '.join(dump_cmd[:-1])} -p**** {db_name}")
+        logger.info(f"Comando dump: {' '.join(dump_cmd)} (usando MYSQL_PWD)")
+
+        # Define MYSQL_PWD no ambiente para evitar passar senha na linha de comando
+        env = os.environ.copy()
+        env['MYSQL_PWD'] = prod_password
 
         # Executa dump
         with open(temp_path, 'w') as dump_file:
@@ -350,12 +353,23 @@ def sync_mysql_production_to_local(db_name: str, config) -> Dict[str, Any]:
                 dump_cmd,
                 stdout=dump_file,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
+                env=env
             )
 
         if result.returncode != 0:
             error_msg = result.stderr.strip()
             logger.error(f"Erro no dump: {error_msg}")
+
+            # Verifica se é erro de acesso negado
+            if "Access denied" in error_msg:
+                return {
+                    'success': False,
+                    'error': f'Acesso negado ao banco de produção. Verifique as permissões do usuário "{prod_user}" no servidor MySQL.',
+                    'details': error_msg,
+                    'suggestion': 'Execute no servidor de produção: GRANT ALL PRIVILEGES ON *.* TO \'anderson\'@\'191.195.115.190\' IDENTIFIED BY \'senha\'; FLUSH PRIVILEGES;'
+                }
+
             return {
                 'success': False,
                 'error': f'Falha no dump da produção: {error_msg}'

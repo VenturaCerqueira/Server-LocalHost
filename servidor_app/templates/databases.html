@@ -35,7 +35,7 @@
                     {% for db_name in mysql_dbs.databases %}
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             {{ db_name }}
-                            <form method="post" action="{{ url_for('api.sync_db', db_name=db_name) }}" onsubmit="return confirm('Deseja sincronizar o banco {{ db_name }} com a produção?');">
+<form method="post" action="{{ url_for('sync_api.sync_db', db_name=db_name) }}" onsubmit="return confirm('Deseja sincronizar o banco {{ db_name }} com a produção?');">
                                 <button type="submit" class="btn btn-sm btn-primary">Sincronizar</button>
                             </form>
                         </li>
