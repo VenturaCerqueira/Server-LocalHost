@@ -355,6 +355,16 @@ if (backBtn) {
             return;
         }
 
+        // Determine download prefix based on current page
+        let downloadPrefix = '';
+        if (window.location.pathname.startsWith('/dropbox')) {
+            downloadPrefix = 'Dropbox/';
+        } else if (window.location.pathname.startsWith('/sistemas')) {
+            downloadPrefix = 'Sistemas/';
+        } else if (window.location.pathname.startsWith('/licitacoes')) {
+            downloadPrefix = 'Licitações/';
+        }
+
         files.forEach(item => {
             const itemElement = document.createElement('div');
 
@@ -404,7 +414,7 @@ if (backBtn) {
                                     </button>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="/download/${item.path}">
+                                    <a class="dropdown-item" href="/download/${downloadPrefix}${item.path}">
                                         <i class="bi bi-download me-2"></i>Download
                                     </a>
                                 </li>
@@ -443,7 +453,7 @@ if (backBtn) {
                                 </button>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="/download/${item.path}">
+                                <a class="dropdown-item" href="/download/${downloadPrefix}${item.path}">
                                     <i class="bi bi-download me-2"></i>Baixar
                                 </a>
                             </li>
