@@ -6,7 +6,7 @@ import os
 import sys
 
 # Adicionar o diretório do projeto ao path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from servidor_app import create_app, db
 from servidor_app.models.user_model import User

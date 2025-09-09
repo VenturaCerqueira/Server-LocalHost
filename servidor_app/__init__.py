@@ -41,10 +41,18 @@ def create_app(test_config=None):
     from .models.user_model import User
     from .controllers.main_controller import main_bp
     from .controllers.api_controller import api_bp
+    from .controllers.git_api import git_api_bp
+    from .controllers.file_api import file_api_bp
+    from .controllers.sync_api import sync_api_bp
+    from .controllers.auth_controller import auth_bp
 
     # Registrar os Blueprints
     app.register_blueprint(main_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(git_api_bp)
+    app.register_blueprint(file_api_bp)
+    app.register_blueprint(sync_api_bp)
+    app.register_blueprint(auth_bp)
 
     # Import metrics service after app creation
     from .services.metrics_service import metrics_service
