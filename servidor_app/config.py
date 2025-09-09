@@ -34,6 +34,12 @@ class Config:
     # Novo diretório para listar os sistemas
     SISTEMAS_DIR = os.environ.get('SISTEMAS_DIR') or 'D:/Servidor/xampp/htdocs'
 
+    # Diretório para licitações
+    LICITACOES_DIR = os.environ.get('LICITACOES_DIR') or 'D:/Servidor/Licitações'
+
+    # Diretório para Dropbox
+    DROPBOX_DIR = os.environ.get('DROPBOX_DIR') or r'C:\Users\desen\Dropbox'
+
     # Credenciais do banco de dados de produção
     # Para desenvolvimento, permite valores vazios com aviso
     PROD_DB_HOST = os.environ.get('PROD_DB_HOST') or 'db-keepsistemas-sql8.c3emmyqhonte.sa-east-1.rds.amazonaws.com'
@@ -57,6 +63,9 @@ class Config:
 
     if not os.path.exists(SISTEMAS_DIR):
         print(f"AVISO: O diretório de sistemas '{SISTEMAS_DIR}' não existe. Funcionalidades de sistemas estarão limitadas.")
+
+    if not os.path.exists(LICITACOES_DIR):
+        print(f"AVISO: O diretório de licitações '{LICITACOES_DIR}' não existe. Funcionalidades de licitações estarão limitadas.")
 
     # Validação de porta do banco de dados
     try:

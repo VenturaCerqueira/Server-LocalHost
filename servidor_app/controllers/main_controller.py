@@ -93,6 +93,82 @@ def sistemas():
     dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
     return render_template('sistemas.html', current_path=current_path, pastas=pastas, pagination=pagination, parent_path=parent_path, dados_servidor=dados_servidor)
 
+@main_bp.route('/licitacoes')
+@login_required
+def licitacoes():
+    # Licitações management page pointing to D:\Servidor\Licitações
+    from servidor_app.models.file_system_model import FileSystemModel
+    import os
+
+    current_path = request.args.get('path', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 50, type=int)
+
+    root_dir = current_app.config['LICITACOES_DIR']
+    fs_model = FileSystemModel(root_dir)
+    try:
+        full_path = os.path.join(root_dir, current_path)
+        if not os.path.exists(full_path):
+            flash(f"Diretório não encontrado: {full_path}", "danger")
+            pastas = []
+            pagination = None
+            parent_path = None
+        else:
+            pastas, current_path, parent_path, pagination = fs_model.list_directory(current_path, page, per_page)
+    except Exception as e:
+        flash(f"Erro ao listar diretório: {e}", "danger")
+        pastas = []
+        pagination = None
+        parent_path = None
+
+    dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
+    return render_template('licitacoes.html', current_path=current_path, pastas=pastas, pagination=pagination, parent_path=parent_path, dados_servidor=dados_servidor)
+
+@main_bp.route('/dropbox')
+@login_required
+def dropbox():
+    # Dropbox management page pointing to network path
+    from servidor_app.models.file_system_model import FileSystemModel
+    import os
+    import logging
+
+    current_path = request.args.get('path', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 50, type=int)
+
+    root_dir = current_app.config['DROPBOX_DIR']
+    error_message = None
+
+    # Check if root directory exists before initializing FileSystemModel
+    if not os.path.exists(root_dir):
+        error_message = f"Diretório Dropbox não encontrado ou inacessível: {root_dir}"
+        pastas = []
+        pagination = None
+        parent_path = None
+    else:
+        try:
+            fs_model = FileSystemModel(root_dir)
+            full_path = os.path.join(root_dir, current_path)
+            if not os.path.exists(full_path):
+                error_message = f"Diretório não encontrado: {full_path}"
+                pastas = []
+                pagination = None
+                parent_path = None
+            else:
+                pastas, current_path, parent_path, pagination = fs_model.list_directory(current_path, page, per_page)
+                # Log debug info
+                logging.debug(f"Dropbox list_directory called with current_path={current_path}, page={page}, per_page={per_page}")
+                if pagination:
+                    logging.debug(f"Pagination info: total_items={pagination.get('total_items')}, total_pages={pagination.get('total_pages')}")
+        except Exception as e:
+            error_message = f"Erro ao listar diretório: {e}"
+            pastas = []
+            pagination = None
+            parent_path = None
+
+    dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
+    return render_template('dropbox.html', current_path=current_path, pastas=pastas, pagination=pagination, parent_path=parent_path, dados_servidor=dados_servidor, error_message=error_message)
+
 @main_bp.route('/metrics')
 @login_required
 def metrics():

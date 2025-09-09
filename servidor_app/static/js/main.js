@@ -380,10 +380,13 @@ if (backBtn) {
                 }
             }
 
+            const isDropbox = window.location.pathname.includes('/dropbox');
+            const folderLink = isDropbox ? `/dropbox?path=${item.path}` : `/browse/${item.path}`;
+
             if (isGrid) {
                 itemElement.innerHTML = `
                     <div class="grid-item-preview">
-                        <a href="${item.is_dir ? '/browse/' + item.path : '#'}" class="nav-link-loader">
+                        <a href="${item.is_dir ? folderLink : '#'}" class="nav-link-loader">
                             <i class="bi ${iconClass} preview-icon" style="color: ${iconColor};"></i>
                         </a>
                     </div>
@@ -420,7 +423,7 @@ if (backBtn) {
                 `;
             } else {
                 itemElement.innerHTML = `
-                    <a href="${item.is_dir ? '/browse/' + item.path : '#'}" class="list-item-link nav-link-loader">
+                    <a href="${item.is_dir ? folderLink : '#'}" class="list-item-link nav-link-loader">
                         <i class="bi ${iconClass} me-3 fs-5" style="color: ${iconColor};"></i>
                         <span class="d-flex flex-column me-auto">
                             <span class="fw-bold text-primary">${item.nome}</span>

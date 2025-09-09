@@ -29,9 +29,15 @@
             <a class="nav-link {% if request.path == url_for('main.sistemas') %}active{% endif %} nav-link-loader" href="{{ url_for('main.sistemas') }}">
                 <i class="bi bi-grid-1x2-fill me-2"></i>Sistemas
             </a>
-<a class="nav-link {% if request.path.startswith(url_for('main.metrics')) %}active{% endif %} nav-link-loader" href="{{ url_for('main.metrics') }}">
-    <i class="bi bi-graph-up me-2"></i>Métricas
-</a>
+            <a class="nav-link {% if request.path == url_for('main.licitacoes') %}active{% endif %} nav-link-loader" href="{{ url_for('main.licitacoes') }}">
+                <i class="bi bi-file-earmark-text-fill me-2"></i>Licitações
+            </a>
+            <a class="nav-link {% if request.path == url_for('main.dropbox') %}active{% endif %} nav-link-loader" href="{{ url_for('main.dropbox') }}">
+                <i class="bi bi-cloud-fill me-2"></i>Dropbox
+            </a>
+            <a class="nav-link {% if request.path.startswith(url_for('main.metrics')) %}active{% endif %} nav-link-loader" href="{{ url_for('main.metrics') }}">
+                <i class="bi bi-graph-up me-2"></i>Métricas
+            </a>
             <a class="nav-link {% if request.path == url_for('main.performance') %}active{% endif %} nav-link-loader" href="{{ url_for('main.performance') }}">
                 <i class="bi bi-speedometer2 me-2"></i>Performance
             </a>
