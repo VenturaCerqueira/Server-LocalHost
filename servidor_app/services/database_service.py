@@ -367,7 +367,8 @@ def sync_mysql_production_to_local(db_name: str, config) -> Dict[str, Any]:
                     'success': False,
                     'error': f'Acesso negado ao banco de produção. Verifique as permissões do usuário "{prod_user}" no servidor MySQL.',
                     'details': error_msg,
-                    'suggestion': 'Execute no servidor de produção: GRANT ALL PRIVILEGES ON *.* TO \'anderson\'@\'191.195.115.190\' IDENTIFIED BY \'senha\'; FLUSH PRIVILEGES;'
+                    'suggestion': f'Execute no servidor de produção: GRANT ALL PRIVILEGES ON *.* TO \'{prod_user}\'@\'191.195.115.190\' IDENTIFIED BY \'senha\'; FLUSH PRIVILEGES;',
+                    'aws_solution': 'Ou adicione o IP atual ao Security Group do RDS no AWS Console: RDS > Databases > db-keepsistemas-sql8 > Connectivity & security > Security group > Add inbound rule (MySQL, TCP, 3306, Source: seu_IP/32)'
                 }
 
             return {
