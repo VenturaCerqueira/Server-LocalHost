@@ -172,6 +172,11 @@ def dropbox():
 @main_bp.route('/metrics')
 @login_required
 def metrics():
+    # Only allow user 'keep' to access metrics page
+    if current_user.username != 'keep':
+        flash('Acesso negado. Você não tem permissão para acessar esta área.', 'danger')
+        return redirect(url_for('main.index'))
+
     # Metrics monitoring page with real data
     dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
     system_resources = performance_optimizer.get_system_resources()
@@ -181,6 +186,11 @@ def metrics():
 @main_bp.route('/performance')
 @login_required
 def performance():
+    # Only allow user 'keep' to access performance page
+    if current_user.username != 'keep':
+        flash('Acesso negado. Você não tem permissão para acessar esta área.', 'danger')
+        return redirect(url_for('main.index'))
+
     # Performance monitoring page with real data
     dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
     performance_stats = performance_optimizer.get_performance_stats()

@@ -35,12 +35,14 @@
             <a class="nav-link {% if request.path == url_for('main.dropbox') %}active{% endif %} nav-link-loader" href="{{ url_for('main.dropbox') }}">
                 <i class="bi bi-cloud-fill me-2"></i>Dropbox
             </a>
+            {% if current_user.username == 'keep' %}
             <a class="nav-link {% if request.path.startswith(url_for('main.metrics')) %}active{% endif %} nav-link-loader" href="{{ url_for('main.metrics') }}">
                 <i class="bi bi-graph-up me-2"></i>Métricas
             </a>
             <a class="nav-link {% if request.path == url_for('main.performance') %}active{% endif %} nav-link-loader" href="{{ url_for('main.performance') }}">
                 <i class="bi bi-speedometer2 me-2"></i>Performance
             </a>
+            {% endif %}
         </div>
 
         <h4 class="fw-bold text-blue mb-4">Ferramentas Externas</h4>

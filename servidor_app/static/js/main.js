@@ -105,15 +105,9 @@ const updateSidebarState = () => {
     }
 };
 
+/* Removed sidebar toggle functionality to disable collapsing sidebar */
 if (sidebarToggle) {
-    sidebarToggle.addEventListener('click', () => {
-        isSidebarCollapsed = !isSidebarCollapsed;
-        updateSidebarState();
-
-        // Add animation to sidebar toggle
-        sidebarToggle.classList.add('bounceIn');
-        setTimeout(() => sidebarToggle.classList.remove('bounceIn'), 800);
-    });
+    sidebarToggle.style.display = 'none'; // Hide the toggle button
 }
 
 // Fix back button in sistemas.html
@@ -150,6 +144,22 @@ if (backBtn) {
             setTimeout(() => themeToggle.classList.remove('bounceIn'), 800);
         });
     }
+
+    // Função para atualizar data e hora
+    const updateDateTime = () => {
+        const now = new Date();
+        const days = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+        const dayName = days[now.getDay()];
+        const dateStr = now.toLocaleDateString('pt-BR');
+        const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const display = `${dayName}, ${dateStr} ${timeStr}`;
+        const element = document.getElementById('date-time-text');
+        if (element) element.textContent = display;
+    };
+
+    // Atualizar data e hora inicialmente e a cada minuto
+    updateDateTime();
+    setInterval(updateDateTime, 60000);
 
     // Lógica do Search
     const showSearchModal = () => {

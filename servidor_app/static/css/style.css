@@ -129,7 +129,53 @@ body {
     transition: opacity 0.3s ease;
 }
 .body-collapsed .sidebar-content {
-    opacity: 0;
+    /* Removed color transparent to allow icons to show */
+}
+.body-collapsed .sidebar-content i {
+    color: var(--text-color);
+}
+.body-collapsed .sidebar .nav-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 0;
+    width: 100%;
+    text-align: center;
+    overflow: hidden;
+}
+.body-collapsed .sidebar .nav-link span,
+.body-collapsed .sidebar .nav-link p {
+    display: none;
+}
+.body-collapsed .sidebar .nav-link i {
+    color: var(--text-color);
+    margin: 0;
+    font-size: 1.5rem;
+    display: block;
+    width: 100%;
+}
+.body-collapsed .sidebar .btn-novo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.75rem 0;
+}
+.body-collapsed .sidebar .btn-novo i {
+    color: #fff;
+    margin: 0;
+}
+.body-collapsed .sidebar h4 {
+    display: none;
+}
+.body-collapsed .sidebar p,
+.body-collapsed .sidebar span {
+    display: none;
+}
+.body-collapsed .sidebar .btn {
+    color: transparent;
+}
+.body-collapsed .sidebar .btn i {
+    color: var(--text-color);
 }
 
 .main-content-area {
