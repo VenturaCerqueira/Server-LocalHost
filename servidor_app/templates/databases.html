@@ -34,6 +34,11 @@
                 <ul class="list-group">
                     {% for db_name in mysql_dbs.databases %}
                         <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {% if db_name == 'db_almoxarifado' %}
+                                <i class="bi bi-archive me-2" title="Almoxarifado"></i>
+                            {% else %}
+                                <i class="bi bi-database me-2" title="Banco de Dados"></i>
+                            {% endif %}
                             {{ db_name }}
 <form method="post" action="{{ url_for('sync_api.sync_db', db_name=db_name) }}" onsubmit="return confirm('Deseja sincronizar o banco {{ db_name }} com a produção?');">
                                 <button type="submit" class="btn btn-sm btn-primary">Sincronizar</button>
