@@ -41,18 +41,22 @@ class Config:
     DROPBOX_DIR = os.environ.get('DROPBOX_DIR') or r'\\ANDERSON-VENTUR\Users\desen\Dropbox'
 
     # Credenciais do banco de dados de produção
-    # Para desenvolvimento, permite valores vazios com aviso
-    PROD_DB_HOST = os.environ.get('PROD_DB_HOST') or 'db-keepsistemas-sql8.c3emmyqhonte.sa-east-1.rds.amazonaws.com'
-    PROD_DB_USER = os.environ.get('PROD_DB_USER') or 'anderson'
-    PROD_DB_PASSWORD = os.environ.get('PROD_DB_PASSWORD') or '126303@Acv'
-    PROD_DB_PORT = os.environ.get('PROD_DB_PORT') or 3306
+    # DEVEM ser definidas no arquivo .env para segurança
+    PROD_DB_HOST = os.environ.get('PROD_DB_HOST')
+    PROD_DB_USER = os.environ.get('PROD_DB_USER')
+    PROD_DB_PASSWORD = os.environ.get('PROD_DB_PASSWORD')
+    PROD_DB_PORT = os.environ.get('PROD_DB_PORT', 3306)
 
-    # Validação das credenciais críticas apenas se pelo menos uma estiver definida
-    prod_creds_defined = any([PROD_DB_HOST, PROD_DB_USER, PROD_DB_PASSWORD])
-    if prod_creds_defined and not all([PROD_DB_HOST, PROD_DB_USER, PROD_DB_PASSWORD]):
-        raise ValueError("Se qualquer credencial de produção for definida, todas devem ser fornecidas: PROD_DB_HOST, PROD_DB_USER, PROD_DB_PASSWORD")
-    elif not prod_creds_defined:
-        print("AVISO: Credenciais de banco de produção não definidas. Funcionalidades de banco estarão limitadas.")
+    # Validação obrigatória das credenciais de produção
+    if not all([PROD_DB_HOST, PROD_DB_USER, PROD_DB_PASSWORD]):
+        raise ValueError(
+            "Credenciais de produção obrigatórias não definidas no arquivo .env. "
+            "Adicione as seguintes variáveis ao .env:\n"
+            "PROD_DB_HOST=seu_host_mysql\n"
+            "PROD_DB_USER=seu_usuario\n"
+            "PROD_DB_PASSWORD=sua_senha\n"
+            "PROD_DB_PORT=3306"
+        )
 
     # Validação adicional para configurações críticas
     if not os.path.exists(ROOT_DIR):
