@@ -4,6 +4,7 @@ from flask import Flask, request
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 import os
+import json
 
 # Instanciar o SQLAlchemy e o LoginManager
 db = SQLAlchemy()
@@ -24,6 +25,9 @@ def create_app(test_config=None):
     # Add min and max functions to Jinja2 globals
     app.jinja_env.globals.update(min=min, max=max)
 
+    # Add fromjson filter to Jinja2
+    app.jinja_env.filters['fromjson'] = lambda s: json.loads(s) if s else []
+
     # Inicializar as extensões com a aplicação
     db.init_app(app)
     login_manager.init_app(app)
@@ -39,6 +43,7 @@ def create_app(test_config=None):
 
     # Importar os modelos e blueprints após db ser inicializado para evitar o circular import
     from .models.user_model import User
+    from .models.role_model import Role
     from .controllers.main_controller import main_bp
     from .controllers.api_controller import api_bp
     from .controllers.git_api import git_api_bp

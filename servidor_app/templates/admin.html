@@ -9,9 +9,12 @@
         {% include 'partials/_sidebar.html' %}
 
         <!-- Main content -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+<main class="main-content-fill px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">Administração do Sistema</h1>
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('main.admin_roles') }}" class="btn btn-primary">Gerenciar Funções</a>
+                </div>
             </div>
 
             <!-- Flash messages -->
@@ -38,6 +41,7 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Usuário</th>
+                                    <th>Função</th>
                                     <th>Status</th>
                                     <th>Data de Criação</th>
                                     <th>Ações</th>
@@ -48,6 +52,7 @@
                                 <tr>
                                     <td>{{ user.id }}</td>
                                     <td>{{ user.username }}</td>
+                                    <td>{{ user.role.name if user.role else 'Nenhuma' }}</td>
                                     <td>
                                         {% if user.is_active %}
                                             <span class="badge bg-success">Ativo</span>
@@ -58,6 +63,9 @@
                                     <td>{{ user.id }}</td> <!-- Placeholder for creation date -->
                                     <td>
                                         <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#assignRoleModal{{ user.id }}">
+                                                <i class="fas fa-user-tag"></i> Atribuir Função
+                                            </button>
                                             <form method="POST" action="{{ url_for('main.toggle_user', user_id=user.id) }}" style="display: inline;">
                                                 <button type="submit" class="btn btn-sm {% if user.is_active %}btn-warning{% else %}btn-success{% endif %}">
                                                     {% if user.is_active %}
@@ -114,6 +122,40 @@
         </main>
     </div>
 </div>
+
+<!-- Role Assignment Modals -->
+{% for user in users %}
+<div class="modal fade" id="assignRoleModal{{ user.id }}" tabindex="-1" aria-labelledby="assignRoleModalLabel{{ user.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignRoleModalLabel{{ user.id }}">Atribuir Função ao Usuário {{ user.username }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('main.assign_role', user_id=user.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="role_id_{{ user.id }}" class="form-label">Selecionar Função</label>
+                        <select class="form-select" id="role_id_{{ user.id }}" name="role_id" required>
+                            <option value="">Selecione uma função...</option>
+                            {% for role in roles %}
+                            <option value="{{ role.id }}" {% if user.role and user.role.id == role.id %}selected{% endif %}>
+                                {{ role.name }}{% if role.allowed_areas %} - {{ role.allowed_areas | fromjson | join(', ') }}{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Função atual: {{ user.role.name if user.role else 'Nenhuma' }}</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Atribuir Função</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endblock %}
 
 {% block scripts %}

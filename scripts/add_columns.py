@@ -38,6 +38,10 @@ def add_columns():
             cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_user_email ON user(email)")
             print("Created unique index for email")
 
+        if 'role_id' not in column_names:
+            cursor.execute("ALTER TABLE user ADD COLUMN role_id INTEGER REFERENCES role(id)")
+            print("Added column 'role_id'")
+
         conn.commit()
         conn.close()
 

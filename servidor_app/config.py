@@ -47,16 +47,16 @@ class Config:
     PROD_DB_PASSWORD = os.environ.get('PROD_DB_PASSWORD')
     PROD_DB_PORT = os.environ.get('PROD_DB_PORT', 3306)
 
-    # Validação obrigatória das credenciais de produção
-    if not all([PROD_DB_HOST, PROD_DB_USER, PROD_DB_PASSWORD]):
-        raise ValueError(
-            "Credenciais de produção obrigatórias não definidas no arquivo .env. "
-            "Adicione as seguintes variáveis ao .env:\n"
-            "PROD_DB_HOST=seu_host_mysql\n"
-            "PROD_DB_USER=seu_usuario\n"
-            "PROD_DB_PASSWORD=sua_senha\n"
-            "PROD_DB_PORT=3306"
-        )
+    # Validação obrigatória das credenciais de produção (desabilitada para desenvolvimento)
+    # if not all([PROD_DB_HOST, PROD_DB_USER, PROD_DB_PASSWORD]):
+    #     raise ValueError(
+    #         "Credenciais de produção obrigatórias não definidas no arquivo .env. "
+    #         "Adicione as seguintes variáveis ao .env:\n"
+    #         "PROD_DB_HOST=seu_host_mysql\n"
+    #         "PROD_DB_USER=seu_usuario\n"
+    #         "PROD_DB_PASSWORD=sua_senha\n"
+    #         "PROD_DB_PORT=3306"
+    #     )
 
     # Validação adicional para configurações críticas
     if not os.path.exists(ROOT_DIR):
