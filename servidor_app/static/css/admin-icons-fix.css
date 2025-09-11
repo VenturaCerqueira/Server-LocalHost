@@ -1,0 +1,43 @@
+/* Adjust icon sizes in admin.html for better appearance */
+.main-content-fill i.bi {
+    font-size: 1rem !important; /* increased size */
+    vertical-align: middle;
+    margin-right: 0.3rem;
+}
+
+/* Increase icon size for Administração do Sistema and Gerenciamento de Usuários headings */
+.main-content-fill h1.h2 > i.bi,
+.main-content-fill h5.card-title > i.bi {
+    font-size: 1.2rem !important;
+}
+
+/* Adjust icon sizes in table headers and rows */
+.table thead th i.bi,
+.table tbody td i.bi {
+    font-size: 1rem !important;
+}
+
+/* Adjust icon sizes in buttons */
+.btn i.bi {
+    font-size: 0.8rem !important;
+    vertical-align: middle;
+    margin-right: 0.25rem;
+}
+
+/* Fix buttons to keep icon and text on the same line */
+.d-flex.gap-2.flex-wrap > form,
+.d-flex.gap-2.flex-wrap > button {
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+}
+
+/* Reduce size of small buttons in admin actions */
+.btn-sm {
+    padding: 0.1rem 0.3rem !important;
+    font-size: 0.65rem !important;
+    margin-right: 0.25rem !important;
+    white-space: nowrap;
+}

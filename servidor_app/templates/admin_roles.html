@@ -11,7 +11,7 @@
         <!-- Main content -->
 <main class="main-content-fill px-md-4">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Gerenciamento de Funções</h1>
+                <h1 class="h2"><i class="bi bi-shield-lock me-2"></i>Gerenciamento de Funções</h1>
             </div>
 
             <!-- Flash messages -->
@@ -29,13 +29,13 @@
             <div class="card shadow-sm rounded">
                 <div class="card-header border-bottom">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="fas fa-user-shield me-2"></i>Gerenciamento de Funções</h5>
-                        <div class="btn-group" role="group">
+                        <h5 class="mb-0"><i class="bi bi-shield-lock me-2"></i>Gerenciamento de Funções</h5>
+                        <div class="d-flex gap-2">
                             <a href="{{ url_for('main.create_role') }}" class="btn btn-sm btn-primary">
-                                <i class="fas fa-plus me-1"></i> Nova Função
+                                <i class="bi bi-plus me-1"></i> Nova Função
                             </a>
                             <a href="{{ url_for('main.admin') }}" class="btn btn-sm btn-secondary">
-                                <i class="fas fa-arrow-left me-1"></i> Voltar
+                                <i class="bi bi-arrow-left me-1"></i> Voltar
                             </a>
                         </div>
                     </div>
@@ -45,10 +45,10 @@
                         <table class="table table-hover table-striped align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th scope="col" class="text-center" style="width: 8%;">ID</th>
-                                    <th scope="col" style="width: 25%;">Nome</th>
-                                    <th scope="col" style="width: 47%;">Áreas Permitidas</th>
-                                    <th scope="col" class="text-center" style="width: 20%;">Ações</th>
+                                    <th scope="col" class="text-center" style="width: 8%;"><i class="bi bi-hash me-1"></i>ID</th>
+                                    <th scope="col" style="width: 25%;"><i class="bi bi-tag me-1"></i>Nome</th>
+                                    <th scope="col" style="width: 47%;"><i class="bi bi-map me-1"></i>Áreas Permitidas</th>
+                                    <th scope="col" class="text-center" style="width: 20%;"><i class="bi bi-gear me-1"></i>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -67,11 +67,11 @@
                                     <td class="text-center">
                                         <div class="d-flex justify-content-center gap-1">
                                             <a href="{{ url_for('main.edit_role', role_id=role.id) }}" class="btn btn-sm btn-outline-primary" title="Editar">
-                                                <i class="fas fa-edit me-1"></i> Editar
+                                                <i class="bi bi-pencil me-1"></i> Editar
                                             </a>
                                             <form method="POST" action="{{ url_for('main.delete_role', role_id=role.id) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir a função {{ role.name }}?')">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir">
-                                                    <i class="fas fa-trash-alt me-1"></i> Excluir
+                                                    <i class="bi bi-trash me-1"></i> Excluir
                                                 </button>
                                             </form>
                                         </div>
