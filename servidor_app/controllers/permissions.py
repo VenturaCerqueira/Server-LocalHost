@@ -42,6 +42,7 @@ def require_access(area):
 # Define area constants
 AREAS = {
     'meus_arquivos': 'meus_arquivos',
+    'dados_pessoais': 'dados_pessoais',
     'banco_dados': 'banco_dados',
     'sistemas': 'sistemas',
     'licitacoes': 'licitacoes',

@@ -57,6 +57,42 @@ def browse(sub_path):
     dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
     return render_template('index.html', current_path=current_path, pastas=pastas, pagination=pagination, parent_path=parent_path, dados_servidor=dados_servidor)
 
+@main_bp.route('/dados_pessoais')
+@login_required
+@require_access(AREAS['dados_pessoais'])
+def dados_pessoais():
+    # Dados Pessoais management page
+    from servidor_app.models.file_system_model import FileSystemModel
+    import os
+
+    current_path = request.args.get('path', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 50, type=int)
+
+    # Use a specific directory for dados pessoais or create one
+    root_dir = os.path.join(current_app.config['ROOT_DIR'], 'Dados_Pessoais')
+    if not os.path.exists(root_dir):
+        os.makedirs(root_dir, exist_ok=True)
+
+    fs_model = FileSystemModel(root_dir)
+    try:
+        full_path = os.path.join(root_dir, current_path)
+        if not os.path.exists(full_path):
+            flash(f"Diretório não encontrado: {full_path}", "danger")
+            pastas = []
+            pagination = None
+            parent_path = None
+        else:
+            pastas, current_path, parent_path, pagination = fs_model.list_directory(current_path, page, per_page)
+    except Exception as e:
+        flash(f"Erro ao listar diretório: {e}", "danger")
+        pastas = []
+        pagination = None
+        parent_path = None
+
+    dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
+    return render_template('documentos_privado.html', current_path=current_path, pastas=pastas, pagination=pagination, parent_path=parent_path, dados_servidor=dados_servidor)
+
 @main_bp.route('/databases')
 @login_required
 @require_access(AREAS['banco_dados'])

@@ -25,6 +25,11 @@
                 <i class="bi bi-folder me-2"></i>Meus Arquivos
             </a>
             {% endif %}
+            {% if current_user.role and current_user.role.allowed_areas and 'dados_pessoais' in current_user.role.allowed_areas | fromjson %}
+            <a class="nav-link {% if request.path == url_for('main.dados_pessoais') %}active{% endif %} nav-link-loader" href="{{ url_for('main.dados_pessoais') }}">
+                <i class="bi bi-shield-lock me-2"></i>Dados Pessoais
+            </a>
+            {% endif %}
             {% if current_user.role and current_user.role.allowed_areas and 'banco_dados' in current_user.role.allowed_areas | fromjson %}
             <a class="nav-link {% if request.path == url_for('main.databases') %}active{% endif %} nav-link-loader" href="{{ url_for('main.databases') }}">
                 <i class="bi bi-database me-2"></i>Banco de Dados
