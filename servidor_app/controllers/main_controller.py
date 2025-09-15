@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, jsonify, session
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, jsonify, session, make_response
 from flask_login import login_required, current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from servidor_app.models.user_model import User
@@ -47,12 +47,10 @@ def browse(sub_path):
 
     fs_model = FileSystemModel(current_app.config['ROOT_DIR'])
 
-    # Check if folder is secure and if user has access
+    # Check if folder is secure and always prompt for password
     if fs_model.is_folder_secure(current_path):
-        # Check if user has already provided password in session
-        if 'access_granted_folders' not in session or current_path not in session['access_granted_folders']:
-            # Redirect to password prompt page
-            return redirect(url_for('main.secure_folder_password', folder_path=current_path))
+        # Always redirect to password prompt page
+        return redirect(url_for('main.secure_folder_password', folder_path=current_path))
 
     try:
         pastas, current_path, parent_path, pagination = fs_model.list_directory(current_path, page, per_page)
@@ -652,17 +650,33 @@ def secure_folder_password(folder_path):
     if request.method == 'POST':
         password = request.form.get('password')
         if fs_model.check_folder_password(folder_path, password):
-            # Grant access by storing in session
-            if 'access_granted_folders' not in session:
-                session['access_granted_folders'] = {}
-            session['access_granted_folders'][folder_path] = True
+            # Password correct, render the folder listing directly
+            current_path = folder_path
+            page = request.args.get('page', 1, type=int)
+            per_page = request.args.get('per_page', 50, type=int)
+            try:
+                pastas, current_path, parent_path, pagination = fs_model.list_directory(current_path, page, per_page)
+            except Exception as e:
+                flash(f"Erro ao listar diretório: {e}", "danger")
+                pastas = []
+                pagination = None
+                parent_path = None
+            dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
             flash('Acesso concedido à pasta segura.', 'success')
-            return redirect(url_for('main.browse', sub_path=folder_path))
+            response = make_response(render_template('index.html', current_path=current_path, pastas=pastas, pagination=pagination, parent_path=parent_path, dados_servidor=dados_servidor))
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            return response
         else:
             flash('Senha incorreta.', 'danger')
 
     dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
-    return render_template('secure_folder_password.html', folder_path=folder_path, dados_servidor=dados_servidor)
+    response = make_response(render_template('secure_folder_password.html', folder_path=folder_path, dados_servidor=dados_servidor))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 @main_bp.app_errorhandler(404)
 def page_not_found(e):
