@@ -28,7 +28,11 @@
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="card shadow">
                         <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">{{ block_name }}</h6>
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                {% set block_icon = links[0].icon if links and links[0].icon else 'bi-folder' %}
+                                <i class="bi {{ block_icon }} me-2"></i>
+                                {{ block_name }}
+                            </h6>
                         </div>
                         <div class="card-body">
                             <div class="d-grid gap-2">

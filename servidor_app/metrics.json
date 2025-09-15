@@ -1,13 +1,13 @@
 {
-  "total_requests": 13,
-  "total_response_time": 1.3996520042419434,
+  "total_requests": 9,
+  "total_response_time": 0.9033143520355225,
   "endpoint_metrics": {
-    "GET main.add_system_link": {
+    "GET main.portal": {
       "count": 2,
-      "total_time": 0.024389982223510742,
-      "avg_time": 0.012194991111755371,
-      "min_time": 0.0006625652313232422,
-      "max_time": 0.0237274169921875,
+      "total_time": 0.020175695419311523,
+      "avg_time": 0.010087847709655762,
+      "min_time": 0.0004904270172119141,
+      "max_time": 0.01968526840209961,
       "status_codes": {
         "302": 1,
         "200": 1
@@ -15,52 +15,42 @@
     },
     "GET main.login": {
       "count": 1,
-      "total_time": 0.6389651298522949,
-      "avg_time": 0.6389651298522949,
-      "min_time": 0.6389651298522949,
-      "max_time": 0.6389651298522949,
+      "total_time": 0.47580528259277344,
+      "avg_time": 0.47580528259277344,
+      "min_time": 0.47580528259277344,
+      "max_time": 0.47580528259277344,
       "status_codes": {
         "200": 1
       }
     },
     "POST main.login": {
       "count": 1,
-      "total_time": 0.331573486328125,
-      "avg_time": 0.331573486328125,
-      "min_time": 0.331573486328125,
-      "max_time": 0.331573486328125,
+      "total_time": 0.1711597442626953,
+      "avg_time": 0.1711597442626953,
+      "min_time": 0.1711597442626953,
+      "max_time": 0.1711597442626953,
       "status_codes": {
         "302": 1
       }
     },
     "GET main.index": {
       "count": 1,
-      "total_time": 0.18922734260559082,
-      "avg_time": 0.18922734260559082,
-      "min_time": 0.18922734260559082,
-      "max_time": 0.18922734260559082,
+      "total_time": 0.09720396995544434,
+      "avg_time": 0.09720396995544434,
+      "min_time": 0.09720396995544434,
+      "max_time": 0.09720396995544434,
       "status_codes": {
         "200": 1
       }
     },
     "GET static": {
-      "count": 7,
-      "total_time": 0.1867382526397705,
-      "avg_time": 0.02667689323425293,
-      "min_time": 0.000644683837890625,
-      "max_time": 0.18198323249816895,
+      "count": 4,
+      "total_time": 0.13896965980529785,
+      "avg_time": 0.03474241495132446,
+      "min_time": 0.0006475448608398438,
+      "max_time": 0.1359257698059082,
       "status_codes": {
-        "304": 7
-      }
-    },
-    "GET main.portal": {
-      "count": 1,
-      "total_time": 0.028757810592651367,
-      "avg_time": 0.028757810592651367,
-      "min_time": 0.028757810592651367,
-      "max_time": 0.028757810592651367,
-      "status_codes": {
-        "200": 1
+        "304": 4
       }
     }
   },

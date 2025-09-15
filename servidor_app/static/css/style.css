@@ -1220,6 +1220,40 @@ textarea:focus {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
 }
 
+/* Block Icon Selection Styles */
+.block-icon-option {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 8px !important;
+    border: 2px solid var(--border-color) !important;
+    background-color: var(--bg-color) !important;
+    color: var(--text-color-muted) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.2rem !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+}
+
+.block-icon-option:hover {
+    border-color: var(--primary-color-light) !important;
+    background-color: var(--link-hover-bg) !important;
+    color: var(--primary-color) !important;
+    transform: scale(1.05) !important;
+}
+
+.block-icon-option.active {
+    border-color: var(--primary-color) !important;
+    background-color: var(--primary-color-light) !important;
+    color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+}
+
+.block-icon-option.pulse {
+    animation: pulse 0.3s ease-in-out !important;
+}
+
 /* Modern Responsive Design */
 @media (max-width: 768px) {
     .navbar {

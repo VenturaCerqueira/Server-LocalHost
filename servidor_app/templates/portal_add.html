@@ -33,7 +33,17 @@
                         </div>
                         <div class="mb-3">
                             <label for="block" class="form-label">Bloco (Opcional)</label>
-                            <input type="text" class="form-control" id="block" name="block" placeholder="Ex: Geral, Admin, etc." value="{{ link.block if link else '' }}">
+                            <div class="input-group">
+                                <select class="form-select" id="block" name="block">
+                                    <option value="">Selecione um bloco...</option>
+                                    {% for block in distinct_blocks %}
+                                        <option value="{{ block }}" {% if link and link.block == block %}selected{% endif %}>{{ block }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#addBlockModal">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label for="icon" class="form-label">Ícone (Classe Bootstrap Icons)</label>
@@ -89,4 +99,71 @@
         </div>
     </div>
 </div>
+
+<!-- Add Block Modal -->
+<div class="modal fade" id="addBlockModal" tabindex="-1" aria-labelledby="addBlockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addBlockModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i>Adicionar Novo Bloco
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newBlockName" class="form-label">Nome do Bloco</label>
+                    <input type="text" class="form-control" id="newBlockName" placeholder="Ex: Admin, Geral, etc." required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ícone do Bloco</label>
+                    <small class="form-text text-muted">Selecione um ícone para representar o bloco</small>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option active" data-icon="bi bi-folder">
+                            <i class="bi bi-folder"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-gear">
+                            <i class="bi bi-gear"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-people">
+                            <i class="bi bi-people"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-graph-up">
+                            <i class="bi bi-graph-up"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-file-earmark-text">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-database">
+                            <i class="bi bi-database"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-shield-lock">
+                            <i class="bi bi-shield-lock"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-envelope">
+                            <i class="bi bi-envelope"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-calendar">
+                            <i class="bi bi-calendar"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-chat-dots">
+                            <i class="bi bi-chat-dots"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-link-45deg">
+                            <i class="bi bi-link-45deg"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-house">
+                            <i class="bi bi-house"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="addBlockBtn">Adicionar Bloco</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

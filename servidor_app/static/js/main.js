@@ -723,4 +723,72 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    // Add Block Modal functionality
+    const addBlockModal = document.getElementById('addBlockModal');
+    const newBlockNameInput = document.getElementById('newBlockName');
+    const addBlockBtn = document.getElementById('addBlockBtn');
+    const blockSelect = document.getElementById('block');
+    const blockIconOptions = document.querySelectorAll('.block-icon-option');
+
+    let selectedBlockIcon = 'bi bi-folder'; // Default icon
+
+    if (addBlockModal) {
+        // Reset modal when opened
+        addBlockModal.addEventListener('show.bs.modal', function() {
+            if (newBlockNameInput) newBlockNameInput.value = '';
+            selectedBlockIcon = 'bi bi-folder';
+            blockIconOptions.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-icon') === selectedBlockIcon) {
+                    btn.classList.add('active');
+                }
+            });
+        });
+
+        // Handle block icon selection
+        blockIconOptions.forEach(button => {
+            button.addEventListener('click', function() {
+                selectedBlockIcon = this.getAttribute('data-icon');
+                blockIconOptions.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+
+                // Add animation effect
+                this.classList.add('pulse');
+                setTimeout(() => this.classList.remove('pulse'), 300);
+            });
+        });
+
+        // Handle add block button
+        if (addBlockBtn) {
+            addBlockBtn.addEventListener('click', function() {
+                const blockName = newBlockNameInput.value.trim();
+                if (!blockName) {
+                    alert('Por favor, insira um nome para o bloco.');
+                    return;
+                }
+
+                // Check if block already exists
+                const existingOptions = Array.from(blockSelect.options).map(opt => opt.value);
+                if (existingOptions.includes(blockName)) {
+                    alert('Este bloco já existe.');
+                    return;
+                }
+
+                // Add new option to select
+                const newOption = document.createElement('option');
+                newOption.value = blockName;
+                newOption.textContent = blockName;
+                newOption.selected = true;
+                blockSelect.appendChild(newOption);
+
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(addBlockModal);
+                modal.hide();
+
+                // Show success feedback
+                showAlert(`Bloco "${blockName}" adicionado com sucesso!`, 'success');
+            });
+        }
+    }
 });

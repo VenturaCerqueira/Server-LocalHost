@@ -158,6 +158,15 @@ def portal():
     dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
     return render_template('portal.html', blocks=blocks, dados_servidor=dados_servidor)
 
+@main_bp.context_processor
+def inject_blocks():
+    # Provide distinct blocks for use in templates like portal_add.html
+    distinct_blocks = [row[0] for row in db.session.query(SystemLink.block).distinct().all() if row[0]]
+    # Also include a default block 'Geral' if not present
+    if 'Geral' not in distinct_blocks:
+        distinct_blocks.append('Geral')
+    return dict(distinct_blocks=distinct_blocks)
+
 @main_bp.route('/portal/<int:link_id>/edit', methods=['GET', 'POST'])
 @login_required
 @require_access(AREAS['sistemas'])
