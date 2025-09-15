@@ -1,47 +1,47 @@
 {
-  "total_requests": 33,
-  "total_response_time": 1.969942569732666,
+  "total_requests": 91,
+  "total_response_time": 4.153015375137329,
   "endpoint_metrics": {
     "GET main.index": {
-      "count": 8,
-      "total_time": 0.5029387474060059,
-      "avg_time": 0.06286734342575073,
+      "count": 14,
+      "total_time": 0.9857654571533203,
+      "avg_time": 0.0704118183680943,
       "min_time": 0.0009074211120605469,
-      "max_time": 0.14896774291992188,
+      "max_time": 0.24789834022521973,
       "status_codes": {
         "302": 1,
-        "200": 7
+        "200": 13
       }
     },
     "GET main.login": {
-      "count": 1,
-      "total_time": 0.5205070972442627,
-      "avg_time": 0.5205070972442627,
-      "min_time": 0.5205070972442627,
+      "count": 3,
+      "total_time": 0.5216293334960938,
+      "avg_time": 0.1738764444986979,
+      "min_time": 0.0004858970642089844,
       "max_time": 0.5205070972442627,
       "status_codes": {
-        "200": 1
+        "200": 3
       }
     },
     "POST main.login": {
-      "count": 1,
-      "total_time": 0.2233877182006836,
-      "avg_time": 0.2233877182006836,
-      "min_time": 0.2233877182006836,
-      "max_time": 0.2233877182006836,
+      "count": 3,
+      "total_time": 0.64485764503479,
+      "avg_time": 0.21495254834493002,
+      "min_time": 0.1825389862060547,
+      "max_time": 0.23893094062805176,
       "status_codes": {
-        "302": 1
+        "302": 3
       }
     },
     "GET static": {
-      "count": 17,
-      "total_time": 0.11450743675231934,
-      "avg_time": 0.006735731573665843,
+      "count": 47,
+      "total_time": 0.15162229537963867,
+      "avg_time": 0.003226006284673163,
       "min_time": 0.00023174285888671875,
       "max_time": 0.09471702575683594,
       "status_codes": {
-        "304": 16,
-        "200": 1
+        "304": 45,
+        "200": 2
       }
     },
     "POST main.create_folder": {
@@ -55,32 +55,73 @@
       }
     },
     "GET main.browse": {
-      "count": 2,
-      "total_time": 0.009412288665771484,
-      "avg_time": 0.004706144332885742,
-      "min_time": 0.0024194717407226562,
+      "count": 7,
+      "total_time": 0.026047945022583008,
+      "avg_time": 0.003721135003226144,
+      "min_time": 0.0015254020690917969,
       "max_time": 0.006992816925048828,
       "status_codes": {
-        "302": 1,
-        "200": 1
+        "302": 4,
+        "200": 3
       }
     },
     "GET main.secure_folder_password": {
-      "count": 1,
-      "total_time": 0.0233914852142334,
-      "avg_time": 0.0233914852142334,
-      "min_time": 0.0233914852142334,
+      "count": 4,
+      "total_time": 0.03137993812561035,
+      "avg_time": 0.007844984531402588,
+      "min_time": 0.002378225326538086,
       "max_time": 0.0233914852142334,
+      "status_codes": {
+        "200": 4
+      }
+    },
+    "POST main.secure_folder_password": {
+      "count": 5,
+      "total_time": 0.8879477977752686,
+      "avg_time": 0.1775895595550537,
+      "min_time": 0.1704263687133789,
+      "max_time": 0.18568754196166992,
+      "status_codes": {
+        "302": 3,
+        "200": 2
+      }
+    },
+    "GET main.admin": {
+      "count": 3,
+      "total_time": 0.1435070037841797,
+      "avg_time": 0.0478356679280599,
+      "min_time": 0.0027146339416503906,
+      "max_time": 0.13656401634216309,
+      "status_codes": {
+        "200": 3
+      }
+    },
+    "GET main.register": {
+      "count": 1,
+      "total_time": 0.01610589027404785,
+      "avg_time": 0.01610589027404785,
+      "min_time": 0.01610589027404785,
+      "max_time": 0.01610589027404785,
       "status_codes": {
         "200": 1
       }
     },
-    "POST main.secure_folder_password": {
+    "POST main.register": {
       "count": 1,
-      "total_time": 0.18101716041564941,
-      "avg_time": 0.18101716041564941,
-      "min_time": 0.18101716041564941,
-      "max_time": 0.18101716041564941,
+      "total_time": 0.22392511367797852,
+      "avg_time": 0.22392511367797852,
+      "min_time": 0.22392511367797852,
+      "max_time": 0.22392511367797852,
+      "status_codes": {
+        "302": 1
+      }
+    },
+    "POST main.assign_role": {
+      "count": 1,
+      "total_time": 0.12544631958007812,
+      "avg_time": 0.12544631958007812,
+      "min_time": 0.12544631958007812,
+      "max_time": 0.12544631958007812,
       "status_codes": {
         "302": 1
       }
