@@ -520,7 +520,7 @@
             {% endif %}
         {% endwith %}
 
-        <form id="loginForm" action="{{ url_for('main.login') }}" method="post">
+        <form id="loginForm" action="{{ url_for('auth.login') }}" method="post">
             <div class="form-group">
                 <i class="bi bi-person-fill input-icon"></i>
                 <input type="text" class="form-control" id="username" name="username" placeholder="Nome de usuário" required>

@@ -15,6 +15,9 @@ def login():
         password = request.form.get('password')
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
+            if not user.is_active:
+                flash('Usuário inativo. Contate o administrador.', 'danger')
+                return redirect(url_for('auth.login'))
             login_user(user)
             flash('Login realizado com sucesso.', 'success')
             return redirect(url_for('main.index'))

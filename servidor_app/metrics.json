@@ -1,87 +1,105 @@
 {
-  "total_requests": 109,
-  "total_response_time": 4.355870962142944,
+  "total_requests": 41,
+  "total_response_time": 7.324428558349609,
   "endpoint_metrics": {
-    "GET main.admin": {
-      "count": 15,
-      "total_time": 0.8734385967254639,
-      "avg_time": 0.05822923978169759,
-      "min_time": 0.0008335113525390625,
-      "max_time": 0.2554008960723877,
-      "status_codes": {
-        "302": 1,
-        "200": 14
-      }
-    },
-    "GET main.login": {
-      "count": 2,
-      "total_time": 1.2766821384429932,
-      "avg_time": 0.6383410692214966,
-      "min_time": 0.18578147888183594,
-      "max_time": 1.0909006595611572,
-      "status_codes": {
-        "200": 2
-      }
-    },
     "POST main.login": {
       "count": 1,
-      "total_time": 0.2357316017150879,
-      "avg_time": 0.2357316017150879,
-      "min_time": 0.2357316017150879,
-      "max_time": 0.2357316017150879,
+      "total_time": 0.21448755264282227,
+      "avg_time": 0.21448755264282227,
+      "min_time": 0.21448755264282227,
+      "max_time": 0.21448755264282227,
       "status_codes": {
         "302": 1
       }
     },
     "GET main.index": {
-      "count": 2,
-      "total_time": 0.287372350692749,
-      "avg_time": 0.1436861753463745,
-      "min_time": 0.0629737377166748,
-      "max_time": 0.22439861297607422,
+      "count": 4,
+      "total_time": 0.7325875759124756,
+      "avg_time": 0.1831468939781189,
+      "min_time": 0.03212904930114746,
+      "max_time": 0.509505033493042,
       "status_codes": {
-        "200": 2
+        "200": 4
       }
     },
     "GET static": {
-      "count": 77,
-      "total_time": 0.24544358253479004,
-      "avg_time": 0.0031875789939583123,
-      "min_time": 0.0002396106719970703,
-      "max_time": 0.13050603866577148,
+      "count": 26,
+      "total_time": 0.17963004112243652,
+      "avg_time": 0.006908847735478328,
+      "min_time": 0.0002841949462890625,
+      "max_time": 0.1469571590423584,
       "status_codes": {
-        "304": 72,
-        "200": 5
+        "304": 26
       }
     },
-    "GET main.admin_roles": {
+    "GET main.admin": {
       "count": 2,
-      "total_time": 0.024868488311767578,
-      "avg_time": 0.012434244155883789,
-      "min_time": 0.0039446353912353516,
-      "max_time": 0.020923852920532227,
+      "total_time": 0.042647361755371094,
+      "avg_time": 0.021323680877685547,
+      "min_time": 0.0033044815063476562,
+      "max_time": 0.03934288024902344,
       "status_codes": {
         "200": 2
       }
     },
-    "GET main.databases": {
-      "count": 9,
-      "total_time": 1.4109244346618652,
-      "avg_time": 0.15676938162909615,
-      "min_time": 0.05414128303527832,
-      "max_time": 0.2952280044555664,
-      "status_codes": {
-        "200": 9
-      }
-    },
-    "GET main.logout": {
+    "POST main.delete_user": {
       "count": 1,
-      "total_time": 0.001409769058227539,
-      "avg_time": 0.001409769058227539,
-      "min_time": 0.001409769058227539,
-      "max_time": 0.001409769058227539,
+      "total_time": 0.20321941375732422,
+      "avg_time": 0.20321941375732422,
+      "min_time": 0.20321941375732422,
+      "max_time": 0.20321941375732422,
       "status_codes": {
         "302": 1
+      }
+    },
+    "GET main.databases": {
+      "count": 3,
+      "total_time": 0.6275694370269775,
+      "avg_time": 0.20918981234232584,
+      "min_time": 0.04770851135253906,
+      "max_time": 0.520352840423584,
+      "status_codes": {
+        "200": 3
+      }
+    },
+    "GET main.sistemas": {
+      "count": 1,
+      "total_time": 0.28987550735473633,
+      "avg_time": 0.28987550735473633,
+      "min_time": 0.28987550735473633,
+      "max_time": 0.28987550735473633,
+      "status_codes": {
+        "200": 1
+      }
+    },
+    "GET main.licitacoes": {
+      "count": 1,
+      "total_time": 0.046766042709350586,
+      "avg_time": 0.046766042709350586,
+      "min_time": 0.046766042709350586,
+      "max_time": 0.046766042709350586,
+      "status_codes": {
+        "200": 1
+      }
+    },
+    "GET main.dropbox": {
+      "count": 1,
+      "total_time": 4.245853662490845,
+      "avg_time": 4.245853662490845,
+      "min_time": 4.245853662490845,
+      "max_time": 4.245853662490845,
+      "status_codes": {
+        "200": 1
+      }
+    },
+    "POST sync_api.sync_db": {
+      "count": 1,
+      "total_time": 0.7417919635772705,
+      "avg_time": 0.7417919635772705,
+      "min_time": 0.7417919635772705,
+      "max_time": 0.7417919635772705,
+      "status_codes": {
+        "500": 1
       }
     }
   },

@@ -21,12 +21,13 @@ def create_admin_user():
 
         if existing_user:
             print("Usuário 'keep' já existe.")
-            # Atualizar para admin se não for
+            # Atualizar para admin se não for e definir senha
             if not existing_user.is_admin:
                 existing_user.is_admin = True
                 existing_user.is_active = True
-                db.session.commit()
-                print("Usuário 'keep' atualizado para administrador.")
+            existing_user.set_password('kinfo2013')
+            db.session.commit()
+            print("Usuário 'keep' atualizado para administrador e senha definida.")
             return
 
         # Criar novo usuário admin
