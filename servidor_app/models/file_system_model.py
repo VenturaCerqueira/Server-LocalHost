@@ -92,6 +92,7 @@ class FileSystemModel:
 
             created_by = metadata.created_by.username if metadata and metadata.created_by else None
             updated_by = metadata.updated_by.username if metadata and metadata.updated_by else None
+            is_secure = metadata is not None and metadata.password_hash is not None
 
             item_data = {
                 'nome': item,
@@ -101,6 +102,7 @@ class FileSystemModel:
                 'created_at': created_at,
                 'created_by': created_by,
                 'updated_by': updated_by,
+                'is_secure': is_secure,
             }
 
             if is_dir:
@@ -193,7 +195,7 @@ class FileSystemModel:
 
         return filename
 
-    def create_folder(self, folder_name, sub_path='', user=None):
+    def create_folder(self, folder_name, sub_path='', user=None, password_hash=None):
         full_path = os.path.join(self.root_dir, sub_path)
         if not os.path.abspath(full_path).startswith(os.path.abspath(self.root_dir)):
             raise PermissionError("Acesso negado.")
@@ -205,15 +207,16 @@ class FileSystemModel:
 
         os.makedirs(new_folder_path)
 
-        # Save or update folder metadata with user info
+        # Save or update folder metadata with user info and password hash
         if user:
             rel_path = os.path.join(sub_path, secure_filename(folder_name)).replace('\\', '/')
             metadata = FileMetadata.query.filter_by(path=rel_path).first()
             if not metadata:
-                metadata = FileMetadata(path=rel_path, created_by=user, updated_by=user)
+                metadata = FileMetadata(path=rel_path, created_by=user, updated_by=user, password_hash=password_hash)
                 db.session.add(metadata)
             else:
                 metadata.updated_by = user
+                metadata.password_hash = password_hash
             db.session.commit()
 
     def move_item(self, source_path, destination_path, user=None):
@@ -258,3 +261,23 @@ class FileSystemModel:
                     child.path = child.path.replace(old_prefix, new_prefix, 1)
                     child.updated_by = user
                 db.session.commit()
+
+    def is_folder_secure(self, folder_path):
+        """
+        Check if a folder is secure (has a password)
+        """
+        rel_path = folder_path.replace('\\', '/')
+        metadata = FileMetadata.query.filter_by(path=rel_path).first()
+        return metadata is not None and metadata.password_hash is not None
+
+    def check_folder_password(self, folder_path, password):
+        """
+        Check if the provided password matches the folder's password
+        """
+        from werkzeug.security import check_password_hash
+
+        rel_path = folder_path.replace('\\', '/')
+        metadata = FileMetadata.query.filter_by(path=rel_path).first()
+        if metadata and metadata.password_hash:
+            return check_password_hash(metadata.password_hash, password)
+        return False

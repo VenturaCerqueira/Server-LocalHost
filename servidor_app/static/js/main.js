@@ -387,9 +387,13 @@ if (backBtn) {
 
             let iconClass;
             let iconColor = 'var(--text-color)';
+            let lockIcon = '';
             if (item.is_dir) {
                 iconClass = 'bi-folder-fill';
                 iconColor = 'var(--primary-color)';
+                if (item.is_secure) {
+                    lockIcon = '<i class="bi bi-lock-fill ms-1" style="color: var(--warning-color); font-size: 0.8em;" title="Pasta protegida por senha"></i>';
+                }
             } else {
                 switch (item.type) {
                     case 'pdf': iconClass = 'bi-filetype-pdf'; iconColor = '#dc3545'; break;
@@ -412,7 +416,7 @@ if (backBtn) {
                     </div>
                     <div class="grid-item-info">
                         <i class="bi ${iconClass} item-icon" style="color: ${iconColor};"></i>
-                        <span class="grid-item-filename">${item.nome}</span>
+                        <span class="grid-item-filename">${item.nome}${lockIcon}</span>
                         <div class="dropdown grid-item-actions">
                             <button class="btn btn-sm btn-link dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-three-dots-vertical"></i>
@@ -446,7 +450,7 @@ if (backBtn) {
                     <a href="${item.is_dir ? folderLink : '#'}" class="list-item-link nav-link-loader">
                         <i class="bi ${iconClass} me-3 fs-5" style="color: ${iconColor};"></i>
                         <span class="d-flex flex-column me-auto">
-                            <span class="fw-bold text-primary">${item.nome}</span>
+                            <span class="fw-bold text-primary">${item.nome}${lockIcon}</span>
                             <small class="text-muted folder-size-placeholder">
                                 ${item.is_dir ? `${item.file_count} arquivos, ${item.folder_count} pastas` : item.size}
                             </small>

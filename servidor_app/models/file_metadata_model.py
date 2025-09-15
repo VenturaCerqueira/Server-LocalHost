@@ -4,6 +4,7 @@ from datetime import datetime
 class FileMetadata(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     path = db.Column(db.String(500), unique=True, nullable=False)  # Relative path from root_dir
+    password_hash = db.Column(db.String(128), nullable=True)  # Hash for secure folders
     created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     updated_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

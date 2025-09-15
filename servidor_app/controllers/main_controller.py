@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, jsonify
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, jsonify, session
 from flask_login import login_required, current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from servidor_app.models.user_model import User
@@ -46,6 +46,14 @@ def browse(sub_path):
     per_page = request.args.get('per_page', 50, type=int)
 
     fs_model = FileSystemModel(current_app.config['ROOT_DIR'])
+
+    # Check if folder is secure and if user has access
+    if fs_model.is_folder_secure(current_path):
+        # Check if user has already provided password in session
+        if 'access_granted_folders' not in session or current_path not in session['access_granted_folders']:
+            # Redirect to password prompt page
+            return redirect(url_for('main.secure_folder_password', folder_path=current_path))
+
     try:
         pastas, current_path, parent_path, pagination = fs_model.list_directory(current_path, page, per_page)
     except Exception as e:
@@ -518,15 +526,17 @@ def upload():
 @login_required
 def create_folder():
     from servidor_app.models.file_system_model import FileSystemModel
+    from werkzeug.security import generate_password_hash
 
     folder_name = request.form.get('folder_name')
     current_path = request.form.get('current_path', '')
+    folder_password = request.form.get('folder_password', None)
 
     if not folder_name:
         return jsonify({'message': 'Nome da pasta é obrigatório', 'success': False}), 400
 
     # Determine root_dir based on current_path context
-    if current_path.startswith('Licitações') or request.referrer and '/licitacoes' in request.referrer:
+    if current_path.startswith('Licitações') or (request.referrer and '/licitacoes' in request.referrer):
         root_dir = current_app.config['LICITACOES_DIR']
     else:
         root_dir = current_app.config['ROOT_DIR']
@@ -534,7 +544,8 @@ def create_folder():
     fs_model = FileSystemModel(root_dir)
 
     try:
-        fs_model.create_folder(folder_name, current_path, current_user)
+        password_hash = generate_password_hash(folder_password) if folder_password else None
+        fs_model.create_folder(folder_name, current_path, current_user, password_hash=password_hash)
         # Determine redirect URL based on context
         if request.referrer and '/licitacoes' in request.referrer:
             redirect_url = url_for('main.licitacoes', path=current_path) if current_path else url_for('main.licitacoes')
@@ -625,6 +636,33 @@ def download(file_path):
         # If it's a file, send it directly
         directory = os.path.dirname(full_path)
         return send_from_directory(directory, os.path.basename(full_path), as_attachment=True)
+
+@main_bp.route('/secure_folder_password/<path:folder_path>', methods=['GET', 'POST'])
+@login_required
+def secure_folder_password(folder_path):
+    from servidor_app.models.file_system_model import FileSystemModel
+    from werkzeug.security import check_password_hash
+
+    fs_model = FileSystemModel(current_app.config['ROOT_DIR'])
+
+    if not fs_model.is_folder_secure(folder_path):
+        flash('Esta pasta não é segura.', 'warning')
+        return redirect(url_for('main.browse', sub_path=folder_path))
+
+    if request.method == 'POST':
+        password = request.form.get('password')
+        if fs_model.check_folder_password(folder_path, password):
+            # Grant access by storing in session
+            if 'access_granted_folders' not in session:
+                session['access_granted_folders'] = {}
+            session['access_granted_folders'][folder_path] = True
+            flash('Acesso concedido à pasta segura.', 'success')
+            return redirect(url_for('main.browse', sub_path=folder_path))
+        else:
+            flash('Senha incorreta.', 'danger')
+
+    dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
+    return render_template('secure_folder_password.html', folder_path=folder_path, dados_servidor=dados_servidor)
 
 @main_bp.app_errorhandler(404)
 def page_not_found(e):

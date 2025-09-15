@@ -168,6 +168,13 @@
                         <label for="folder-name-input" class="form-label form-label-upload">Nome da nova pasta</label>
                         <input type="text" class="form-control form-control-upload" id="folder-name-input" name="folder_name" required>
                     </div>
+                    <div class="mb-3">
+                        <label for="folder-password-input" class="form-label form-label-upload">
+                            <i class="bi bi-shield-lock me-1"></i>Senha (opcional)
+                        </label>
+                        <input type="password" class="form-control form-control-upload" id="folder-password-input" name="folder_password" placeholder="Deixe em branco para pasta pública">
+                        <div class="form-text">Se definir uma senha, a pasta será protegida e só poderá ser acessada com a senha.</div>
+                    </div>
                 </div>
                 <div class="modal-footer modal-footer-upload">
                     <button type="button" class="btn btn-secondary btn-secondary-upload" data-bs-dismiss="modal">Cancelar</button>
