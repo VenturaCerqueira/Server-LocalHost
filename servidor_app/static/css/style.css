@@ -1014,6 +1014,20 @@ body {
     animation-fill-mode: both;
 }
 
+/* Portal page specific animations */
+.portal-card {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.portal-link {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.portal-link:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
 .fadeInDown {
     animation-name: fadeInDown;
 }

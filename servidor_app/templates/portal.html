@@ -5,7 +5,9 @@
 {% block content %}
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Portal dos Sistemas</h1>
+        <h1 class="h3 mb-0 text-gray-800 animated fadeInDown">
+            <i class="bi bi-grid-3x3-gap me-2"></i>Portal dos Sistemas
+        </h1>
         <a href="{{ url_for('main.add_system_link') }}" class="btn btn-primary">
             <i class="bi bi-plus-lg me-2"></i>Adicionar Link
         </a>
@@ -26,7 +28,7 @@
         <div class="row">
             {% for block_name, links in blocks.items() %}
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <div class="card shadow">
+                    <div class="card shadow animated fadeInUp">
                         <div class="card-header py-3">
                             <h6 class="m-0 font-weight-bold text-primary">
                                 {% set block_icon = links[0].icon if links and links[0].icon else 'bi-folder' %}
@@ -38,7 +40,7 @@
                             <div class="d-grid gap-2">
                                 {% for link in links %}
                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <a href="{{ link.url }}" target="_blank" class="btn btn-outline-primary flex-grow-1 text-start">
+                                        <a href="{{ link.url }}" target="_blank" class="btn btn-outline-primary flex-grow-1 text-start portal-link">
                                             <i class="bi {{ link.icon or 'bi-link-45deg' }} me-2"></i>{{ link.name }}
                                         </a>
                                         <div class="btn-group ms-2" role="group" aria-label="Actions">
