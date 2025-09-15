@@ -3,6 +3,7 @@ from flask_login import login_required, current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from servidor_app.models.user_model import User
 from servidor_app.models.role_model import Role
+from servidor_app.models.system_link_model import SystemLink
 from servidor_app.services.server_info_service import get_server_info
 import servidor_app.services.database_service as db_service
 from servidor_app.services.metrics_service import metrics_service
@@ -139,6 +140,86 @@ def sistemas():
 
     dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
     return render_template('sistemas.html', current_path=current_path, pastas=pastas, pagination=pagination, parent_path=parent_path, dados_servidor=dados_servidor)
+
+@main_bp.route('/portal')
+@login_required
+@require_access(AREAS['sistemas'])
+def portal():
+    # Portal page with blocks of system links
+    links = SystemLink.query.all()
+    # Group links by block
+    blocks = {}
+    for link in links:
+        block = link.block or 'Geral'
+        if block not in blocks:
+            blocks[block] = []
+        blocks[block].append(link)
+
+    dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
+    return render_template('portal.html', blocks=blocks, dados_servidor=dados_servidor)
+
+@main_bp.route('/portal/<int:link_id>/edit', methods=['GET', 'POST'])
+@login_required
+@require_access(AREAS['sistemas'])
+def edit_system_link(link_id):
+    link = SystemLink.query.get_or_404(link_id)
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        url = request.form.get('url')
+        block = request.form.get('block')
+        icon = request.form.get('icon')
+
+        if not name or not url:
+            flash('Nome e URL são obrigatórios.', 'danger')
+            return redirect(url_for('main.edit_system_link', link_id=link_id))
+
+        link.name = name
+        link.url = url
+        link.block = block
+        link.icon = icon
+
+        db.session.commit()
+        flash('Link atualizado com sucesso.', 'success')
+        return redirect(url_for('main.portal'))
+
+    dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
+    return render_template('portal_add.html', link=link, dados_servidor=dados_servidor)
+
+@main_bp.route('/portal/<int:link_id>/delete', methods=['POST'])
+@login_required
+@require_access(AREAS['sistemas'])
+def delete_system_link(link_id):
+    link = SystemLink.query.get_or_404(link_id)
+    db.session.delete(link)
+    db.session.commit()
+    flash('Link excluído com sucesso.', 'success')
+    return redirect(url_for('main.portal'))
+
+@main_bp.route('/portal/add', methods=['GET', 'POST'])
+@login_required
+@require_access(AREAS['sistemas'])
+def add_system_link():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        url = request.form.get('url')
+        block = request.form.get('block')
+        icon = request.form.get('icon')
+
+        if not name or not url:
+            flash('Nome e URL são obrigatórios.', 'danger')
+            return redirect(url_for('main.add_system_link'))
+
+        new_link = SystemLink(name=name, url=url, block=block, icon=icon)
+        db.session.add(new_link)
+        db.session.commit()
+        flash('Link adicionado com sucesso.', 'success')
+        return redirect(url_for('main.portal'))
+
+    dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
+    return render_template('portal_add.html', dados_servidor=dados_servidor)
+
+
 
 @main_bp.route('/licitacoes')
 @login_required

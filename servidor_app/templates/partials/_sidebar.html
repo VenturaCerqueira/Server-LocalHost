@@ -39,6 +39,9 @@
             <a class="nav-link {% if request.path == url_for('main.sistemas') %}active{% endif %} nav-link-loader" href="{{ url_for('main.sistemas') }}">
                 <i class="bi bi-grid-1x2-fill me-2"></i>Sistemas
             </a>
+            <a class="nav-link {% if request.path == url_for('main.portal') %}active{% endif %} nav-link-loader" href="{{ url_for('main.portal') }}">
+                <i class="bi bi-link-45deg me-2"></i>Portal
+            </a>
             {% endif %}
             {% if current_user.role and current_user.role.allowed_areas and 'licitacoes' in current_user.role.allowed_areas | fromjson %}
             <a class="nav-link {% if request.path == url_for('main.licitacoes') %}active{% endif %} nav-link-loader" href="{{ url_for('main.licitacoes') }}">

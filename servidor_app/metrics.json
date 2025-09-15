@@ -1,75 +1,66 @@
 {
-  "total_requests": 37,
-  "total_response_time": 2.4919235706329346,
+  "total_requests": 13,
+  "total_response_time": 1.3996520042419434,
   "endpoint_metrics": {
+    "GET main.add_system_link": {
+      "count": 2,
+      "total_time": 0.024389982223510742,
+      "avg_time": 0.012194991111755371,
+      "min_time": 0.0006625652313232422,
+      "max_time": 0.0237274169921875,
+      "status_codes": {
+        "302": 1,
+        "200": 1
+      }
+    },
     "GET main.login": {
       "count": 1,
-      "total_time": 0.4498131275177002,
-      "avg_time": 0.4498131275177002,
-      "min_time": 0.4498131275177002,
-      "max_time": 0.4498131275177002,
+      "total_time": 0.6389651298522949,
+      "avg_time": 0.6389651298522949,
+      "min_time": 0.6389651298522949,
+      "max_time": 0.6389651298522949,
       "status_codes": {
         "200": 1
       }
     },
     "POST main.login": {
       "count": 1,
-      "total_time": 0.31942200660705566,
-      "avg_time": 0.31942200660705566,
-      "min_time": 0.31942200660705566,
-      "max_time": 0.31942200660705566,
+      "total_time": 0.331573486328125,
+      "avg_time": 0.331573486328125,
+      "min_time": 0.331573486328125,
+      "max_time": 0.331573486328125,
       "status_codes": {
         "302": 1
       }
     },
     "GET main.index": {
-      "count": 4,
-      "total_time": 0.2574880123138428,
-      "avg_time": 0.0643720030784607,
-      "min_time": 0.041603803634643555,
-      "max_time": 0.12041902542114258,
+      "count": 1,
+      "total_time": 0.18922734260559082,
+      "avg_time": 0.18922734260559082,
+      "min_time": 0.18922734260559082,
+      "max_time": 0.18922734260559082,
       "status_codes": {
-        "200": 4
+        "200": 1
       }
     },
     "GET static": {
-      "count": 17,
-      "total_time": 0.19333553314208984,
-      "avg_time": 0.011372678420122932,
-      "min_time": 0.0002503395080566406,
-      "max_time": 0.16997790336608887,
+      "count": 7,
+      "total_time": 0.1867382526397705,
+      "avg_time": 0.02667689323425293,
+      "min_time": 0.000644683837890625,
+      "max_time": 0.18198323249816895,
       "status_codes": {
-        "304": 17
+        "304": 7
       }
     },
-    "GET main.browse": {
-      "count": 4,
-      "total_time": 0.017772436141967773,
-      "avg_time": 0.004443109035491943,
-      "min_time": 0.0028061866760253906,
-      "max_time": 0.00652313232421875,
+    "GET main.portal": {
+      "count": 1,
+      "total_time": 0.028757810592651367,
+      "avg_time": 0.028757810592651367,
+      "min_time": 0.028757810592651367,
+      "max_time": 0.028757810592651367,
       "status_codes": {
-        "302": 4
-      }
-    },
-    "GET main.secure_folder_password": {
-      "count": 4,
-      "total_time": 0.04755735397338867,
-      "avg_time": 0.011889338493347168,
-      "min_time": 0.002502918243408203,
-      "max_time": 0.035694122314453125,
-      "status_codes": {
-        "200": 4
-      }
-    },
-    "POST main.secure_folder_password": {
-      "count": 6,
-      "total_time": 1.2065351009368896,
-      "avg_time": 0.2010891834894816,
-      "min_time": 0.18440008163452148,
-      "max_time": 0.2327404022216797,
-      "status_codes": {
-        "200": 6
+        "200": 1
       }
     }
   },

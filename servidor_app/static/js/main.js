@@ -700,3 +700,27 @@ async function moveItem(sourcePath, destinationPath) {
         alert('Erro na conexão com o servidor.');
     }
 }
+
+// Portal icon selection functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const iconOptions = document.querySelectorAll('.icon-option');
+    const iconInput = document.getElementById('icon');
+
+    if (iconOptions.length > 0 && iconInput) {
+        iconOptions.forEach(button => {
+            button.addEventListener('click', function() {
+                const iconClass = this.getAttribute('data-icon');
+                iconInput.value = iconClass;
+
+                // Add visual feedback
+                iconOptions.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+
+                // Remove active class after a short delay
+                setTimeout(() => {
+                    this.classList.remove('active');
+                }, 300);
+            });
+        });
+    }
+});
