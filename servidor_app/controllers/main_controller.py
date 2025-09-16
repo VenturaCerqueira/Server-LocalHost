@@ -104,10 +104,11 @@ def dados_pessoais():
 @login_required
 @require_access(AREAS['banco_dados'])
 def databases():
-    # Database management page with MySQL databases from XAMPP
+    # Database management page with MySQL databases from XAMPP and production
     dados_servidor = get_server_info(current_app.config['ROOT_DIR'])
-    mysql_dbs = db_service.list_local_mysql_databases(current_app.config)
-    return render_template('databases.html', dados_servidor=dados_servidor, mysql_dbs=mysql_dbs)
+    mysql_dbs_local = db_service.list_local_mysql_databases(current_app.config)
+    mysql_dbs_prod = db_service.list_production_mysql_databases(current_app.config)
+    return render_template('databases.html', dados_servidor=dados_servidor, mysql_dbs_local=mysql_dbs_local, mysql_dbs_prod=mysql_dbs_prod)
 
 @main_bp.route('/sistemas')
 @login_required

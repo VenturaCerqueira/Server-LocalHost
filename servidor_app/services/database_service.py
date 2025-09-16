@@ -11,6 +11,7 @@ import subprocess
 import tempfile
 from typing import Dict, List, Any, Optional, Tuple
 from contextlib import contextmanager
+import pymysql
 
 logger = logging.getLogger(__name__)
 
@@ -304,6 +305,87 @@ def list_local_mysql_databases(config) -> Dict[str, Any]:
             'error': f'Erro inesperado: {str(e)}',
             'databases': []
         }
+
+def list_production_mysql_databases(config) -> Dict[str, Any]:
+    """
+    Lista bancos de dados MySQL de produção usando pymysql
+    """
+    prod_host = config.get('MYSQL_HOST', 'db-keepsistemas-sql8.c3emmyqhonte.sa-east-1.rds.amazonaws.com')
+    prod_port = config.get('MYSQL_PORT', 3306)
+    prod_user = config.get('MYSQL_USER', 'servidor')
+    prod_password = config.get('MYSQL_PASSWORD', 'servkinfo2013')
+
+    connection = None
+    try:
+        logger.info(f"Conectando ao banco de produção: {prod_host}:{prod_port}")
+
+        # Conecta ao servidor MySQL sem especificar um banco de dados
+        connection = pymysql.connect(
+            host=prod_host,
+            port=prod_port,
+            user=prod_user,
+            password=prod_password,
+            cursorclass=pymysql.cursors.DictCursor,
+            connect_timeout=15,
+            read_timeout=300,
+            write_timeout=300
+        )
+
+        logger.info("Conectado com sucesso ao servidor MySQL de produção")
+
+        with connection.cursor() as cursor:
+            # Lista todos os bancos de dados
+            cursor.execute("SHOW DATABASES;")
+            result = cursor.fetchall()
+
+        # Extrai os nomes dos bancos e filtra bancos do sistema
+        databases = []
+        system_dbs = {'information_schema', 'mysql', 'performance_schema', 'sys'}
+
+        for row in result:
+            db_name = row['Database']
+            if db_name and db_name not in system_dbs:
+                databases.append(db_name)
+
+        logger.info(f"Encontrados {len(databases)} bancos de dados de produção")
+        return {
+            'success': True,
+            'databases': databases,
+            'count': len(databases)
+        }
+
+    except pymysql.MySQLError as e:
+        error_msg = str(e)
+        logger.error(f"Erro MySQL ao listar bancos de produção: {error_msg}")
+
+        # Trata erro de acesso negado especificamente
+        if e.args[0] == 1045:  # Access denied
+            return {
+                'success': False,
+                'error': f'Acesso negado ao servidor MySQL de produção. Verifique as credenciais e permissões.',
+                'details': error_msg,
+                'suggestion': f'Adicione o IP atual ao Security Group do RDS no AWS Console ou verifique as permissões do usuário "{prod_user}".'
+            }
+
+        return {
+            'success': False,
+            'error': f'Erro de conexão MySQL: {error_msg}',
+            'databases': []
+        }
+
+    except Exception as e:
+        error_msg = str(e)
+        logger.error(f"Erro inesperado ao listar bancos de produção: {error_msg}")
+        return {
+            'success': False,
+            'error': f'Erro inesperado: {error_msg}',
+            'databases': []
+        }
+
+    finally:
+        if connection and connection.open:
+            connection.close()
+            logger.info("Conexão com o servidor MySQL de produção encerrada")
 
 def sync_mysql_production_to_local(db_name: str, config) -> Dict[str, Any]:
     """
