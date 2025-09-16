@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}Sistemas{% endblock %}
@@ -137,8 +138,8 @@
 
 <!-- Git Pull Modal -->
 <div class="modal fade" id="gitPullModal" tabindex="-1" aria-labelledby="gitPullModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content animate__animated animate__zoomIn">
             <div class="modal-header">
                 <h5 class="modal-title" id="gitPullModalLabel">
                     <i class="bi bi-arrow-down-circle-fill me-2"></i>Atualizando Projeto
@@ -146,14 +147,57 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="git-pull-status" class="text-center">
-                    <div class="spinner-border text-success" role="status">
-                        <span class="visually-hidden">Carregando...</span>
+                <div id="progress-container" class="mb-3" style="display: none;">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 100%"></div>
                     </div>
-                    <p class="mt-3">Executando git pull...</p>
+                    <small class="text-muted">Executando git pull...</small>
                 </div>
-                <div id="git-pull-result" style="display: none;">
-                    <pre id="git-output" class="bg-light p-3 rounded"></pre>
+                <div id="success-message" class="alert alert-success" style="display: none;">
+                    <i class="bi bi-check-circle-fill me-2"></i>Git pull executado com sucesso!
+                </div>
+                <div id="error-message" class="alert alert-danger" style="display: none;">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Erro durante o git pull. Verifique os conflitos.
+                </div>
+                <pre id="git-output" class="bg-dark text-light p-3 rounded" style="max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.9em;"></pre>
+            </div>
+            <div class="modal-footer" id="git-modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Git Clone Modal -->
+<div class="modal fade" id="gitCloneModal" tabindex="-1" aria-labelledby="gitCloneModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="gitCloneModalLabel">Clonar Repositório Git</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="git-clone-form">
+                    <div class="mb-3">
+                        <label for="repo-url" class="form-label">URL do Repositório</label>
+                        <input type="url" class="form-control" id="repo-url" placeholder="https://github.com/user/repo.git" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Clonar</button>
+                </form>
+                <div id="git-clone-progress-container" class="mb-3 mt-3" style="display: none;">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 100%"></div>
+                    </div>
+                    <small class="text-muted">Clonando repositório...</small>
+                </div>
+                <div id="git-clone-result" class="mt-3" style="display: none;">
+                    <div id="git-clone-success-message" class="alert alert-success" style="display: none;">
+                        <i class="bi bi-check-circle-fill me-2"></i>Repositório clonado com sucesso!
+                    </div>
+                    <div id="git-clone-error-message" class="alert alert-danger" style="display: none;">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Erro ao clonar repositório.
+                    </div>
+                    <pre id="git-clone-output" class="bg-dark text-light p-3 rounded" style="max-height: 300px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.9em;"></pre>
                 </div>
             </div>
             <div class="modal-footer">
@@ -162,6 +206,12 @@
         </div>
     </div>
 </div>
+<script>
+    var gitCloneModal = document.getElementById('gitCloneModal');
+    gitCloneModal.addEventListener('hidden.bs.modal', function () {
+        location.reload();
+    });
+</script>
 
 <style>
 .hover-card {
@@ -185,41 +235,132 @@
 </style>
 
 <script>
+let currentProjectPath = '';
+let currentEventSource = null;
+
 document.addEventListener('click', function(event) {
     if (event.target.classList.contains('git-pull-project-btn') || event.target.closest('.git-pull-project-btn')) {
         const button = event.target.classList.contains('git-pull-project-btn') ? event.target : event.target.closest('.git-pull-project-btn');
-        const projectPath = button.getAttribute('data-project');
+        currentProjectPath = button.getAttribute('data-project');
 
         const modal = new bootstrap.Modal(document.getElementById('gitPullModal'));
         modal.show();
 
-        fetch('/api/git_pull_project', {
+        document.getElementById('git-output').textContent = '';
+        document.getElementById('git-output').classList.remove('text-success', 'text-danger');
+
+        // Hide messages
+        document.getElementById('success-message').style.display = 'none';
+        document.getElementById('error-message').style.display = 'none';
+
+        // Clear previous buttons
+        const footer = document.getElementById('git-modal-footer');
+        footer.innerHTML = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>';
+
+        if (currentEventSource) {
+            currentEventSource.close();
+        }
+
+        // Show progress bar
+        document.getElementById('progress-container').style.display = 'block';
+
+        currentEventSource = new EventSource('/api/git_pull_project?project_path=' + encodeURIComponent(currentProjectPath));
+
+        currentEventSource.onmessage = function(event) {
+            if (event.data === 'SUCCESS') {
+                document.getElementById('progress-container').style.display = 'none';
+                document.getElementById('success-message').style.display = 'block';
+                currentEventSource.close();
+            } else if (event.data === 'ERROR') {
+                document.getElementById('progress-container').style.display = 'none';
+                document.getElementById('error-message').style.display = 'block';
+                // Add buttons for conflict resolution
+                addConflictButtons();
+                currentEventSource.close();
+            } else {
+                document.getElementById('git-output').textContent += event.data + '\n';
+            }
+        };
+
+        currentEventSource.onerror = function() {
+            document.getElementById('progress-container').style.display = 'none';
+            document.getElementById('git-output').textContent += 'Erro ao conectar com o servidor\n';
+            document.getElementById('git-output').classList.add('text-danger');
+            currentEventSource.close();
+        };
+    }
+});
+
+function addConflictButtons() {
+    const footer = document.getElementById('git-modal-footer');
+    footer.innerHTML = `
+        <button type="button" class="btn btn-primary me-2" id="merge-btn"><i class="bi bi-git-merge me-1"></i>Git Merge</button>
+        <button type="button" class="btn btn-warning me-2" id="abort-merge-btn"><i class="bi bi-x-circle me-1"></i>Abortar Merge</button>
+        <button type="button" class="btn btn-info me-2" id="view-status-btn"><i class="bi bi-info-circle me-1"></i>Ver Status</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x me-1"></i>Fechar</button>
+    `;
+
+    document.getElementById('abort-merge-btn').addEventListener('click', function() {
+        fetch('/api/git_merge_abort', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ project_path: projectPath })
+            body: JSON.stringify({ project_path: currentProjectPath })
         })
         .then(response => response.json())
         .then(data => {
-            document.getElementById('git-pull-status').style.display = 'none';
-            document.getElementById('git-pull-result').style.display = 'block';
-            document.getElementById('git-output').textContent = data.output || data.error || 'Erro desconhecido';
-
+            document.getElementById('git-output').textContent += '\n--- Abort Merge ---\n' + (data.output || data.error || 'Erro');
             if (data.success) {
+                document.getElementById('git-output').classList.remove('text-danger');
+                document.getElementById('git-output').classList.add('text-success');
+            }
+        })
+        .catch(error => {
+            document.getElementById('git-output').textContent += '\nErro ao abortar merge\n';
+        });
+    });
+
+    document.getElementById('merge-btn').addEventListener('click', function() {
+        fetch('/api/git_merge', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ project_path: currentProjectPath })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('git-output').textContent += '\n--- Git Merge ---\n' + (data.output || data.error || 'Erro');
+            if (data.success) {
+                document.getElementById('git-output').classList.remove('text-danger');
                 document.getElementById('git-output').classList.add('text-success');
             } else {
+                document.getElementById('git-output').classList.remove('text-success');
                 document.getElementById('git-output').classList.add('text-danger');
             }
         })
         .catch(error => {
-            document.getElementById('git-pull-status').style.display = 'none';
-            document.getElementById('git-pull-result').style.display = 'block';
-            document.getElementById('git-output').textContent = 'Erro ao conectar com o servidor';
-            document.getElementById('git-output').classList.add('text-danger');
+            document.getElementById('git-output').textContent += '\nErro ao executar merge\n';
         });
-    }
-});
+    });
+
+    document.getElementById('view-status-btn').addEventListener('click', function() {
+        document.getElementById('git-output').textContent += '\n--- Git Status ---\n';
+        const statusSource = new EventSource('/api/git_status?project_path=' + encodeURIComponent(currentProjectPath));
+        statusSource.onmessage = function(event) {
+            if (event.data === 'END') {
+                statusSource.close();
+            } else {
+                document.getElementById('git-output').textContent += event.data + '\n';
+            }
+        };
+        statusSource.onerror = function() {
+            document.getElementById('git-output').textContent += 'Erro ao obter status\n';
+            statusSource.close();
+        };
+    });
+}
 
 document.getElementById('git-clone-form').addEventListener('submit', function(event) {
     event.preventDefault();
@@ -231,42 +372,53 @@ document.getElementById('git-clone-form').addEventListener('submit', function(ev
         return;
     }
 
-    const statusDiv = document.getElementById('git-clone-status');
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('gitCloneModal'));
+    modal.show();
+
+    const progressContainer = document.getElementById('git-clone-progress-container');
     const resultDiv = document.getElementById('git-clone-result');
     const outputPre = document.getElementById('git-clone-output');
 
-    statusDiv.style.display = 'block';
+    // Hide messages
+    const successMessage = document.getElementById('git-clone-success-message');
+    const errorMessage = document.getElementById('git-clone-error-message');
+    if (successMessage) successMessage.style.display = 'none';
+    if (errorMessage) errorMessage.style.display = 'none';
+
+    progressContainer.style.display = 'block';
     resultDiv.style.display = 'none';
     outputPre.textContent = '';
+    outputPre.classList.remove('text-success', 'text-danger');
 
-    fetch('/api/git_clone', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ repo_url: repoUrl })
-    })
-    .then(response => response.json())
-    .then(data => {
-        statusDiv.style.display = 'none';
-        resultDiv.style.display = 'block';
-        outputPre.textContent = data.output || data.error || 'Erro desconhecido';
+    const eventSource = new EventSource('/api/git_clone?repo_url=' + encodeURIComponent(repoUrl));
 
-        if (data.success) {
-            outputPre.classList.remove('text-danger');
+    eventSource.onmessage = function(event) {
+        if (event.data === 'SUCCESS') {
+            progressContainer.style.display = 'none';
+            resultDiv.style.display = 'block';
             outputPre.classList.add('text-success');
-        } else {
-            outputPre.classList.remove('text-success');
+            if (successMessage) successMessage.style.display = 'block';
+            eventSource.close();
+        } else if (event.data === 'ERROR') {
+            progressContainer.style.display = 'none';
+            resultDiv.style.display = 'block';
             outputPre.classList.add('text-danger');
+            if (errorMessage) errorMessage.style.display = 'block';
+            eventSource.close();
+        } else {
+            outputPre.textContent += event.data + '\n';
         }
-    })
-    .catch(error => {
-        statusDiv.style.display = 'none';
+    };
+
+    eventSource.onerror = function() {
+        progressContainer.style.display = 'none';
         resultDiv.style.display = 'block';
-        outputPre.textContent = 'Erro ao conectar com o servidor';
-        outputPre.classList.remove('text-success');
+        outputPre.textContent += 'Erro ao conectar com o servidor\n';
         outputPre.classList.add('text-danger');
-    });
+        if (errorMessage) errorMessage.style.display = 'block';
+        eventSource.close();
+    };
 });
 </script>
 {% endblock %}
