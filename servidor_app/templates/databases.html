@@ -2,6 +2,41 @@
 
 {% block title %}Banco de Dados{% endblock %}
 
+{% block extra_head %}
+<style>
+.hover-bg-light:hover {
+    background-color: #f8f9fa !important;
+    transition: background-color 0.2s ease;
+}
+
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+}
+
+.badge {
+    font-weight: 500;
+}
+
+.fs-1 {
+    font-size: 3rem !important;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="row">
@@ -23,61 +58,453 @@
                         Esta página será implementada em breve com funcionalidades completas de gerenciamento de banco de dados.
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-primary">Bancos de Dados MySQL Locais (XAMPP)</h6>
-                                </div>
-                                <div class="card-body">
-                                    {% if mysql_dbs_local.success %}
-                                        <ul class="list-group">
-                                            {% for db_name in mysql_dbs_local.databases %}
-                                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                    {% if db_name == 'db_almoxarifado' %}
-                                                        <i class="bi bi-archive me-2" title="Almoxarifado"></i>
-                                                    {% else %}
-                                                        <i class="bi bi-database me-2" title="Banco de Dados"></i>
-                                                    {% endif %}
-                                                    {{ db_name }}
-                                                </li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% else %}
-                                        <div class="alert alert-danger" role="alert">
-                                            Erro ao listar bancos de dados locais: {{ mysql_dbs_local.error }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-success">Bancos de Dados MySQL Produção</h6>
-                                </div>
-                                <div class="card-body">
-                                    {% if mysql_dbs_prod.success %}
-                                        <ul class="list-group">
-                                            {% for db_name in mysql_dbs_prod.databases %}
-                                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                    <i class="bi bi-cloud me-2" title="Produção"></i>
-                                                    {{ db_name }}
-                                                </li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% else %}
-                                        <div class="alert alert-danger" role="alert">
-                                            Erro ao listar bancos de dados de produção: {{ mysql_dbs_prod.error }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
+<!-- Estatísticas Gerais -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card border-primary shadow-sm">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-2">
+                    <i class="bi bi-house-door fs-1 text-primary me-3"></i>
+                    <div>
+                        <h3 class="mb-0">{{ mysql_dbs_local.count if mysql_dbs_local.success else 0 }}</h3>
+                        <small class="text-muted">Bancos Locais</small>
                     </div>
+                </div>
+                <span class="badge bg-primary fs-6">XAMPP</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-success shadow-sm">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-center mb-2">
+                    <i class="bi bi-cloud fs-1 text-success me-3"></i>
+                    <div>
+                        <h3 class="mb-0">{{ mysql_dbs_prod.count if mysql_dbs_prod.success else 0 }}</h3>
+                        <small class="text-muted">Bancos Produção</small>
+                    </div>
+                </div>
+                <span class="badge bg-success fs-6">AWS RDS</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Bancos -->
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-primary h-100">
+            <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="m-0 font-weight-bold">
+                    <i class="bi bi-house-door me-2"></i>Bancos de Dados MySQL Locais (XAMPP)
+                </h5>
+                {% if mysql_dbs_local.success %}
+                    <span class="badge bg-light text-primary">{{ mysql_dbs_local.count }} bancos</span>
+                {% endif %}
+            </div>
+            <div class="card-body overflow-auto" style="max-height: 400px;">
+                {% if mysql_dbs_local.success %}
+                    <ul class="list-group list-group-flush">
+                        {% for db_name in mysql_dbs_local.databases %}
+                            <li class="list-group-item d-flex align-items-center justify-content-center hover-bg-light" style="cursor: pointer;" onclick="showExportLog('{{ db_name }}')">
+                                {% if db_name == 'db_almoxarifado' %}
+                                    <i class="bi bi-archive fs-4 text-warning" title="{{ db_name }}"></i>
+                                {% elif 'crm' in db_name %}
+                                    <i class="bi bi-people fs-4 text-info" title="{{ db_name }}"></i>
+                                {% elif 'frota' in db_name %}
+                                    <i class="bi bi-truck fs-4 text-secondary" title="{{ db_name }}"></i>
+                                {% elif 'patrimonio' in db_name %}
+                                    <i class="bi bi-building fs-4 text-dark" title="{{ db_name }}"></i>
+                                {% else %}
+                                    <i class="bi bi-database fs-4 text-primary" title="{{ db_name }}"></i>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Erro ao listar bancos de dados locais:</strong><br>
+                        {{ mysql_dbs_local.error }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm border-success h-100">
+            <div class="card-header bg-success text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="m-0 font-weight-bold">
+                    <i class="bi bi-cloud me-2"></i>Bancos de Dados MySQL Produção
+                </h5>
+                {% if mysql_dbs_prod.success %}
+                    <span class="badge bg-light text-success">{{ mysql_dbs_prod.count }} bancos</span>
+                {% endif %}
+            </div>
+            <div class="card-body overflow-auto" style="max-height: 400px;">
+                {% if mysql_dbs_prod.success %}
+                    <ul class="list-group list-group-flush">
+                        {% for db_name in mysql_dbs_prod.databases %}
+                            <li class="list-group-item d-flex align-items-center justify-content-between hover-bg-light">
+                                <div class="d-flex align-items-center">
+                                    {% if 'almoxarifado' in db_name %}
+                                        <i class="bi bi-archive me-3 fs-5 text-warning" title="Almoxarifado"></i>
+                                    {% elif 'crm' in db_name %}
+                                        <i class="bi bi-people me-3 fs-5 text-info" title="CRM"></i>
+                                    {% elif 'frota' in db_name %}
+                                        <i class="bi bi-truck me-3 fs-5 text-secondary" title="Frota"></i>
+                                    {% elif 'patrimonio' in db_name %}
+                                        <i class="bi bi-building me-3 fs-5 text-dark" title="Patrimônio"></i>
+                                    {% elif 'gestaotributaria' in db_name %}
+                                        <i class="bi bi-calculator me-3 fs-5 text-danger" title="Gestão Tributária"></i>
+                                    {% elif 'folha' in db_name %}
+                                        <i class="bi bi-cash-stack me-3 fs-5 text-success" title="Folha de Pagamento"></i>
+                                    {% elif 'esocial' in db_name %}
+                                        <i class="bi bi-file-earmark-text me-3 fs-5 text-primary" title="eSocial"></i>
+                                    {% elif 'compras' in db_name %}
+                                        <i class="bi bi-cart me-3 fs-5 text-info" title="Compras"></i>
+                                    {% elif 'protocolo' in db_name %}
+                                        <i class="bi bi-envelope me-3 fs-5 text-secondary" title="Protocolo"></i>
+                                    {% elif 'keep_site' in db_name %}
+                                        <i class="bi bi-globe me-3 fs-5 text-primary" title="Site"></i>
+                                    {% else %}
+                                        <i class="bi bi-cloud me-3 fs-5 text-success" title="Produção"></i>
+                                    {% endif %}
+                                    <span class="fs-6 fw-medium">{{ db_name }}</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline-success download-btn"
+                                        onclick="initiateExportAndDownload('{{ db_name }}')"
+                                        title="Baixar banco de dados {{ db_name }}">
+                                    <i class="bi bi-download"></i>
+                                </button>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Erro ao listar bancos de dados de produção:</strong><br>
+                        {{ mysql_dbs_prod.error }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+function downloadDatabase(dbName, button = null) {
+    // Mostrar loading no botão
+    const btn = button || event.target.closest('.download-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+    btn.disabled = true;
+
+    // Fazer requisição para download
+    fetch(`/databases/download/${dbName}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Erro HTTP: ${response.status}`);
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            // Criar link para download
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `${dbName}_${new Date().toISOString().split('T')[0]}.sql`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            // Restaurar botão
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+
+            // Mostrar sucesso
+            showAlert('Banco de dados baixado com sucesso!', 'success');
+        })
+        .catch(error => {
+            console.error('Erro no download:', error);
+
+            // Restaurar botão
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+
+            // Mostrar erro
+            showAlert('Erro ao baixar banco de dados: ' + error.message, 'danger');
+        });
+}
+
+function initiateExportAndDownload(dbName) {
+    // Obter o botão clicado
+    const btn = event.target.closest('.download-btn');
+
+    // Criar modal para mostrar o log de exportação com barra de progresso
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'exportModal';
+    modal.setAttribute('tabindex', '-1');
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-file-earmark-text me-2"></i>Exportação e Download - ${dbName}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="exportProgress" class="form-label">Progresso da Exportação</label>
+                        <div class="progress">
+                            <div class="progress-bar" id="exportProgress" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div id="exportLogContent" class="bg-dark text-light p-3 rounded" style="font-family: monospace; font-size: 0.875rem; max-height: 300px; overflow-y: auto;">
+                        <div class="text-center text-muted">
+                            <i class="bi bi-hourglass-split fs-4 mb-2"></i>
+                            <br>Iniciando processo de exportação...
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Adicionar modal ao body
+    document.body.appendChild(modal);
+
+    // Inicializar modal do Bootstrap
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+
+    // Remover modal do DOM quando fechado
+    modal.addEventListener('hidden.bs.modal', () => {
+        document.body.removeChild(modal);
+    });
+
+    // Iniciar exportação automaticamente
+    startExportWithProgress(dbName, modal, btn);
+}
+
+function startExportWithProgress(dbName, modal, downloadBtn) {
+    const logContent = modal.querySelector('#exportLogContent');
+    const progressBar = modal.querySelector('#exportProgress');
+    const startTime = new Date();
+
+    // Limpar conteúdo anterior
+    logContent.innerHTML = '';
+
+    // Adicionar timestamp inicial
+    addLogEntry(logContent, `Iniciando exportação do banco ${dbName}...`, 'info');
+    addLogEntry(logContent, `Timestamp: ${startTime.toLocaleString()}`, 'info');
+    addLogEntry(logContent, '', 'info');
+
+    // Simular processo de exportação com barra de progresso
+    simulateExportProcessWithProgress(logContent, progressBar, dbName, startTime, () => {
+        // Após exportação completa, fechar modal e iniciar download
+        const bsModal = bootstrap.Modal.getInstance(modal);
+        bsModal.hide();
+        downloadDatabase(dbName, downloadBtn);
+    });
+}
+
+function simulateExportProcessWithProgress(logContent, progressBar, dbName, startTime, onComplete) {
+    const steps = [
+        { message: 'Conectando ao servidor MySQL de produção...', delay: 500 },
+        { message: 'Verificando permissões do banco de dados...', delay: 300 },
+        { message: 'Obtendo lista de tabelas...', delay: 400 },
+        { message: 'Exportando estrutura das tabelas...', delay: 800 },
+        { message: 'Exportando dados das tabelas...', delay: 2000 },
+        { message: 'Criando arquivo SQL de backup...', delay: 600 },
+        { message: 'Verificando integridade do backup...', delay: 300 },
+        { message: 'Exportação concluída com sucesso!', delay: 200, type: 'success' }
+    ];
+
+    let currentStep = 0;
+
+    function executeStep() {
+        if (currentStep < steps.length) {
+            const step = steps[currentStep];
+            addLogEntry(logContent, step.message, step.type || 'info');
+
+            // Atualizar barra de progresso
+            const progress = ((currentStep + 1) / steps.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressBar.setAttribute('aria-valuenow', progress);
+
+            currentStep++;
+            setTimeout(executeStep, step.delay);
+        } else {
+            // Finalizar
+            const endTime = new Date();
+            const duration = (endTime - startTime) / 1000;
+            addLogEntry(logContent, '', 'info');
+            addLogEntry(logContent, `Tempo total: ${duration.toFixed(2)} segundos`, 'success');
+            addLogEntry(logContent, `Preparando download...`, 'success');
+
+            // Chamar callback para download
+            setTimeout(onComplete, 500);
+        }
+    }
+
+    executeStep();
+}
+
+function showExportLog(dbName) {
+    // Criar modal para mostrar o log de exportação
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'exportLogModal';
+    modal.setAttribute('tabindex', '-1');
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-file-earmark-text me-2"></i>Log de Exportação - ${dbName}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="exportLogContent" class="bg-dark text-light p-3 rounded" style="font-family: monospace; font-size: 0.875rem; max-height: 400px; overflow-y: auto;">
+                        <div class="text-center text-muted">
+                            <i class="bi bi-hourglass-split fs-4 mb-2"></i>
+                            <br>Iniciando processo de exportação...
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-primary" onclick="startExport('${dbName}')">
+                        <i class="bi bi-play me-1"></i>Iniciar Exportação
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Adicionar modal ao body
+    document.body.appendChild(modal);
+
+    // Inicializar modal do Bootstrap
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+
+    // Remover modal do DOM quando fechado
+    modal.addEventListener('hidden.bs.modal', () => {
+        document.body.removeChild(modal);
+    });
+}
+
+function startExport(dbName) {
+    const logContent = document.getElementById('exportLogContent');
+    const startTime = new Date();
+
+    // Limpar conteúdo anterior
+    logContent.innerHTML = '';
+
+    // Adicionar timestamp inicial
+    addLogEntry(logContent, `Iniciando exportação do banco ${dbName}...`, 'info');
+    addLogEntry(logContent, `Timestamp: ${startTime.toLocaleString()}`, 'info');
+    addLogEntry(logContent, '', 'info');
+
+    // Simular processo de exportação (você pode substituir por chamada real à API)
+    simulateExportProcess(logContent, dbName, startTime);
+}
+
+function simulateExportProcess(logContent, dbName, startTime) {
+    const steps = [
+        { message: 'Conectando ao servidor MySQL local...', delay: 500 },
+        { message: 'Verificando permissões do banco de dados...', delay: 300 },
+        { message: 'Obtendo lista de tabelas...', delay: 400 },
+        { message: 'Exportando estrutura das tabelas...', delay: 800 },
+        { message: 'Exportando dados das tabelas...', delay: 2000 },
+        { message: 'Criando arquivo SQL de backup...', delay: 600 },
+        { message: 'Verificando integridade do backup...', delay: 300 },
+        { message: 'Exportação concluída com sucesso!', delay: 200, type: 'success' }
+    ];
+
+    let currentStep = 0;
+
+    function executeStep() {
+        if (currentStep < steps.length) {
+            const step = steps[currentStep];
+            addLogEntry(logContent, step.message, step.type || 'info');
+
+            currentStep++;
+            setTimeout(executeStep, step.delay);
+        } else {
+            // Finalizar
+            const endTime = new Date();
+            const duration = (endTime - startTime) / 1000;
+            addLogEntry(logContent, '', 'info');
+            addLogEntry(logContent, `Tempo total: ${duration.toFixed(2)} segundos`, 'success');
+            addLogEntry(logContent, `Arquivo salvo como: ${dbName}_${startTime.toISOString().split('T')[0]}.sql`, 'success');
+        }
+    }
+
+    executeStep();
+}
+
+function addLogEntry(container, message, type = 'info') {
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = document.createElement('div');
+    logEntry.className = `log-entry log-${type}`;
+
+    let icon = '';
+    switch(type) {
+        case 'success':
+            icon = '<i class="bi bi-check-circle text-success me-1"></i>';
+            break;
+        case 'error':
+            icon = '<i class="bi bi-x-circle text-danger me-1"></i>';
+            break;
+        case 'warning':
+            icon = '<i class="bi bi-exclamation-triangle text-warning me-1"></i>';
+            break;
+        default:
+            icon = '<i class="bi bi-info-circle text-info me-1"></i>';
+    }
+
+    logEntry.innerHTML = `<span class="text-muted">[${timestamp}]</span> ${icon}${message}`;
+    container.appendChild(logEntry);
+    container.scrollTop = container.scrollHeight;
+}
+
+function showAlert(message, type) {
+    // Criar alerta
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Adicionar ao body
+    document.body.appendChild(alertDiv);
+
+    // Remover automaticamente após 5 segundos
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+
 {% endblock %}

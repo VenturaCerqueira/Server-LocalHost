@@ -1,13 +1,13 @@
 {
-  "total_requests": 9,
-  "total_response_time": 2.1552560329437256,
+  "total_requests": 10,
+  "total_response_time": 37.17951226234436,
   "endpoint_metrics": {
     "GET main.databases": {
       "count": 2,
-      "total_time": 0.5244252681732178,
-      "avg_time": 0.2622126340866089,
-      "min_time": 0.00048351287841796875,
-      "max_time": 0.5239417552947998,
+      "total_time": 0.6293220520019531,
+      "avg_time": 0.31466102600097656,
+      "min_time": 0.0006723403930664062,
+      "max_time": 0.6286497116088867,
       "status_codes": {
         "302": 1,
         "200": 1
@@ -15,45 +15,68 @@
     },
     "GET main.login": {
       "count": 1,
-      "total_time": 1.0448181629180908,
-      "avg_time": 1.0448181629180908,
-      "min_time": 1.0448181629180908,
-      "max_time": 1.0448181629180908,
+      "total_time": 0.6593785285949707,
+      "avg_time": 0.6593785285949707,
+      "min_time": 0.6593785285949707,
+      "max_time": 0.6593785285949707,
       "status_codes": {
         "200": 1
       }
     },
     "POST main.login": {
       "count": 1,
-      "total_time": 0.27730536460876465,
-      "avg_time": 0.27730536460876465,
-      "min_time": 0.27730536460876465,
-      "max_time": 0.27730536460876465,
+      "total_time": 0.28092169761657715,
+      "avg_time": 0.28092169761657715,
+      "min_time": 0.28092169761657715,
+      "max_time": 0.28092169761657715,
       "status_codes": {
         "302": 1
       }
     },
     "GET main.index": {
       "count": 1,
-      "total_time": 0.14586997032165527,
-      "avg_time": 0.14586997032165527,
-      "min_time": 0.14586997032165527,
-      "max_time": 0.14586997032165527,
+      "total_time": 0.15678048133850098,
+      "avg_time": 0.15678048133850098,
+      "min_time": 0.15678048133850098,
+      "max_time": 0.15678048133850098,
       "status_codes": {
         "200": 1
       }
     },
     "GET static": {
       "count": 4,
-      "total_time": 0.16283726692199707,
-      "avg_time": 0.04070931673049927,
-      "min_time": 0.0005831718444824219,
-      "max_time": 0.16034913063049316,
+      "total_time": 0.18598341941833496,
+      "avg_time": 0.04649585485458374,
+      "min_time": 0.0006623268127441406,
+      "max_time": 0.1826152801513672,
       "status_codes": {
         "304": 4
       }
+    },
+    "GET main.download_database": {
+      "count": 1,
+      "total_time": 35.26712608337402,
+      "avg_time": 35.26712608337402,
+      "min_time": 35.26712608337402,
+      "max_time": 35.26712608337402,
+      "status_codes": {
+        "200": 1
+      }
     }
   },
-  "slow_requests": [],
-  "alerts": []
+  "slow_requests": [
+    {
+      "timestamp": "2025-09-16T18:03:39.598404",
+      "endpoint": "GET main.download_database",
+      "response_time": 35.26712608337402,
+      "status_code": 200
+    }
+  ],
+  "alerts": [
+    {
+      "timestamp": "2025-09-16T18:03:39.598783",
+      "message": "Endpoint GET main.download_database is responding slowly (>5s)",
+      "severity": "warning"
+    }
+  ]
 }

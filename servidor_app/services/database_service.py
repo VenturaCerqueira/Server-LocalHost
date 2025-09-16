@@ -1,4 +1,4 @@
-"""
+﻿"""
 Serviço de Otimização de Banco de Dados
 Gerencia conexões, queries otimizadas e pool de conexões
 """
@@ -310,10 +310,10 @@ def list_production_mysql_databases(config) -> Dict[str, Any]:
     """
     Lista bancos de dados MySQL de produção usando pymysql
     """
-    prod_host = config.get('MYSQL_HOST', 'db-keepsistemas-sql8.c3emmyqhonte.sa-east-1.rds.amazonaws.com')
-    prod_port = config.get('MYSQL_PORT', 3306)
-    prod_user = config.get('MYSQL_USER', 'servidor')
-    prod_password = config.get('MYSQL_PASSWORD', 'servkinfo2013')
+    prod_host = config.get('PROD_DB_HOST', 'db-keepsistemas-sql8.c3emmyqhonte.sa-east-1.rds.amazonaws.com')
+    prod_port = config.get('PROD_DB_PORT', 3306)
+    prod_user = config.get('PROD_DB_USER', 'servidor')
+    prod_password = config.get('PROD_DB_PASSWORD', 'servkinfo2013')
 
     connection = None
     try:
@@ -504,5 +504,107 @@ def sync_mysql_production_to_local(db_name: str, config) -> Dict[str, Any]:
         if os.path.exists(temp_path):
             os.unlink(temp_path)
 
+def dump_production_database(config, db_name: str) -> Dict[str, Any]:
+    """
+    Faz dump do banco de dados MySQL de produção e retorna o conteúdo SQL
+    """
+    # Credenciais de produção
+    prod_host = config.get('PROD_DB_HOST', 'db-keepsistemas-sql8.c3emmyqhonte.sa-east-1.rds.amazonaws.com')
+    prod_port = config.get('PROD_DB_PORT', 3306)
+    prod_user = config.get('PROD_DB_USER', 'servidor')
+    prod_password = config.get('PROD_DB_PASSWORD', 'servkinfo2013')
+
+    try:
+        logger.info(f"Iniciando dump do banco {db_name} da produção")
+
+        # Comando mysqldump para produção - solução simples sem FLUSH TABLES
+        dump_cmd = [
+            'mysqldump',
+            '--force',              # Continua mesmo com erros
+            '--quick',              # Dump linha por linha
+            '--lock-tables=false',  # Não bloqueia tabelas
+            '--no-tablespaces',     # Evita privilégios de tablespace
+            '--skip-opt',           # Desabilita opções padrão problemáticas
+            '-u', prod_user,
+            '-h', prod_host,
+            '-P', str(prod_port),
+            db_name
+        ]
+        logger.info(f"Executando mysqldump para {db_name}")
+
+        # Define MYSQL_PWD no ambiente para segurança
+        env = os.environ.copy()
+        env['MYSQL_PWD'] = prod_password
+
+        # Cria arquivo temporário para o dump
+        with tempfile.NamedTemporaryFile(mode='w+b', suffix='.sql', delete=False) as temp_file:
+            temp_path = temp_file.name
+
+        try:
+            # Executa dump diretamente para arquivo
+            with open(temp_path, 'wb') as dump_file:
+                result = subprocess.run(
+                    dump_cmd,
+                    stdout=dump_file,
+                    stderr=subprocess.PIPE,
+                    env=env,
+                    timeout=300  # 5 minutos timeout
+                )
+
+            if result.returncode != 0:
+                error_msg = result.stderr.decode('utf-8', errors='ignore').strip()
+                logger.error(f"Erro no dump: {error_msg}")
+
+                # Trata erro de acesso negado
+                if "Access denied" in error_msg:
+                    return {
+                        'success': False,
+                        'error': f'Acesso negado ao banco de produção. Verifique as permissões do usuário "{prod_user}".',
+                        'details': error_msg,
+                        'suggestion': f'Execute no servidor de produção: GRANT ALL PRIVILEGES ON *.* TO \'{prod_user}\'@\'191.195.115.190\' IDENTIFIED BY \'senha\';'
+                    }
+
+                return {
+                    'success': False,
+                    'error': f'Falha no dump da produção: {error_msg}'
+                }
+
+            # Lê o conteúdo do arquivo como bytes
+            with open(temp_path, 'rb') as dump_file:
+                dump_content = dump_file.read()
+
+        finally:
+            # Remove arquivo temporário
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+
+        timestamp = time.strftime('%Y%m%d_%H%M%S')
+
+        logger.info(f"Dump do banco {db_name} concluído com sucesso ({len(dump_content)} caracteres)")
+
+        return {
+            'success': True,
+            'dump': dump_content,
+            'timestamp': timestamp,
+            'db_name': db_name
+        }
+
+    except subprocess.TimeoutExpired:
+        logger.error(f"Timeout no dump do banco {db_name}")
+        return {
+            'success': False,
+            'error': 'Timeout ao fazer dump do banco de dados'
+        }
+
+    except Exception as e:
+        logger.error(f"Erro inesperado no dump: {str(e)}")
+        return {
+            'success': False,
+            'error': f'Erro inesperado: {str(e)}'
+        }
+
 # Instância global será criada no app initialization
 db_optimizer = None
+
+# Debug log para verificar se o módulo foi carregado corretamente
+logger.info("database_service module loaded, dump_production_database function available: %s", hasattr(__import__('__main__'), 'dump_production_database') or 'dump_production_database' in globals())

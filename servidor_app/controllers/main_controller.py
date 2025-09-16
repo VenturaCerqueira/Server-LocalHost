@@ -110,6 +110,29 @@ def databases():
     mysql_dbs_prod = db_service.list_production_mysql_databases(current_app.config)
     return render_template('databases.html', dados_servidor=dados_servidor, mysql_dbs_local=mysql_dbs_local, mysql_dbs_prod=mysql_dbs_prod)
 
+@main_bp.route('/databases/download/<db_name>')
+@login_required
+@require_access(AREAS['banco_dados'])
+def download_database(db_name):
+    # Download production database as SQL dump
+    try:
+        # Get database dump
+        dump_result = db_service.dump_production_database(current_app.config, db_name)
+
+        if not dump_result['success']:
+            return jsonify({'error': dump_result['error']}), 500
+
+        # Create response with SQL content
+        response = make_response(dump_result['dump'])
+        response.headers['Content-Type'] = 'application/sql'
+        response.headers['Content-Disposition'] = f'attachment; filename={db_name}_{dump_result["timestamp"]}.sql'
+
+        return response
+
+    except Exception as e:
+        current_app.logger.error(f"Error downloading database {db_name}: {str(e)}")
+        return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
+
 @main_bp.route('/sistemas')
 @login_required
 @require_access(AREAS['sistemas'])
