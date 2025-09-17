@@ -606,5 +606,30 @@ def dump_production_database(config, db_name: str) -> Dict[str, Any]:
 # Instância global será criada no app initialization
 db_optimizer = None
 
+def get_production_mysql_connection(config, database=None):
+    """
+    Retorna uma conexão pymysql para o banco de produção usando as configurações do app
+    """
+    prod_host = config.get('PROD_DB_HOST', 'db-keepsistemas-sql8.c3emmyqhonte.sa-east-1.rds.amazonaws.com')
+    prod_port = int(config.get('PROD_DB_PORT', 3306))
+    prod_user = config.get('PROD_DB_USER', 'servidor')
+    prod_password = config.get('PROD_DB_PASSWORD', 'servkinfo2013')
+
+    conn_params = dict(
+        host=prod_host,
+        port=prod_port,
+        user=prod_user,
+        password=prod_password,
+        cursorclass=pymysql.cursors.DictCursor,
+        connect_timeout=int(config.get('MYSQL_CONNECT_TIMEOUT', 15)),
+        read_timeout=int(config.get('MYSQL_READ_TIMEOUT', 300)),
+        write_timeout=int(config.get('MYSQL_WRITE_TIMEOUT', 300))
+    )
+    if database:
+        conn_params['database'] = database
+
+    connection = pymysql.connect(**conn_params)
+    return connection
+
 # Debug log para verificar se o módulo foi carregado corretamente
 logger.info("database_service module loaded, dump_production_database function available: %s", hasattr(__import__('__main__'), 'dump_production_database') or 'dump_production_database' in globals())

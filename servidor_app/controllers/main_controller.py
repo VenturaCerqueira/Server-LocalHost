@@ -11,8 +11,80 @@ from servidor_app.services.optimization_service import performance_optimizer
 from servidor_app.controllers.permissions import require_access, AREAS
 from servidor_app import db
 import json
+import graphviz
+
+
+def lower_keys(d):
+    if isinstance(d, dict):
+        return {str(k).lower(): v for k, v in d.items()}
+    return d
+
+def format_number(num):
+    if num is None:
+        return "0"
+    try:
+        return f"{int(num):,}".replace(",", ".")
+    except (ValueError, TypeError):
+        return str(num)
+
+def decimal_to_float(obj):
+    from decimal import Decimal
+    if isinstance(obj, Decimal):
+        return float(obj)
+    elif isinstance(obj, dict):
+        return {k: decimal_to_float(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [decimal_to_float(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(decimal_to_float(item) for item in obj)
+    return obj
+
+def get_table_color(table_name):
+    table_name = table_name.lower()
+    if any(word in table_name for word in ['user', 'usuario', 'auth', 'login', 'account', 'profile']):
+        return '#E3F2FD'
+    elif any(word in table_name for word in ['log', 'audit', 'history', 'track', 'visit']):
+        return '#FFF3E0'
+    elif any(word in table_name for word in ['config', 'setting', 'parametro', 'system', 'admin', 'option']):
+        return '#F5F5F5'
+    elif ('_' in table_name and len(table_name.split('_')) >= 2) or \
+         any(word in table_name for word in ['relacionamento', 'pivot', 'junction']):
+        return '#E8F5E9'
+    else:
+        return '#FFE0E6'
+
+def get_table_category(table_name):
+    table_name = table_name.lower()
+    if any(word in table_name for word in ['user', 'usuario', 'auth', 'login', 'account', 'profile']):
+        return 'authentication'
+    elif any(word in table_name for word in ['log', 'audit', 'history', 'track', 'visit']):
+        return 'logging'
+    elif any(word in table_name for word in ['config', 'setting', 'parametro', 'system', 'admin', 'option']):
+        return 'configuration'
+    elif ('_' in table_name and len(table_name.split('_')) >= 2 and
+          not any(kw in table_name for kw in ['user', 'log', 'config', 'parametro'])):
+        return 'relationship'
+    else:
+        return 'business'
+
+def get_column_icon(column_type):
+    column_type = column_type.lower()
+    if 'int' in column_type or 'bigint' in column_type or 'smallint' in column_type:
+        return 'bi-hash'
+    elif 'varchar' in column_type or 'text' in column_type or 'char' in column_type:
+        return 'bi-textarea-t'
+    elif 'date' in column_type or 'datetime' in column_type or 'timestamp' in column_type:
+        return 'bi-calendar'
+    elif 'decimal' in column_type or 'float' in column_type or 'double' in column_type:
+        return 'bi-calculator'
+    elif 'bool' in column_type or 'tinyint(1)' in column_type:
+        return 'bi-toggle-on'
+    else:
+        return 'bi-code'
 
 main_bp = Blueprint('main', __name__)
+
+
 
 @main_bp.route('/')
 @login_required
@@ -132,6 +204,249 @@ def download_database(db_name):
     except Exception as e:
         current_app.logger.error(f"Error downloading database {db_name}: {str(e)}")
         return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
+
+@main_bp.route('/databases/analyze/<db_name>')
+@login_required
+@require_access(AREAS['banco_dados'])
+def analyze_database(db_name):
+    import os
+    import pymysql
+    import time
+    import traceback
+    import json
+    import html
+    from flask import render_template, current_app
+
+    # Load environment variables from app config
+    config = current_app.config
+
+    # Connect to database and gather metadata
+    connection = None
+    markdown_content = ""
+    tables_with_details_for_diagrams_and_docs = []
+    error_message = None
+
+    try:
+        from servidor_app.services.database_service import get_production_mysql_connection
+
+        connection = get_production_mysql_connection(config, db_name)
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT table_name, engine, table_collation, table_comment, create_time, update_time, table_rows, ROUND((data_length + index_length) / 1024 / 1024, 2) AS size_mb FROM information_schema.tables WHERE table_schema = %s ORDER BY table_name", (db_name,))
+            tables_metadata_raw_list = cursor.fetchall()
+
+            if not tables_metadata_raw_list:
+                error_message = f"Nenhuma tabela encontrada no banco de dados '{db_name}'."
+                return render_template('database_analysis.html', error=error_message, db_name=db_name)
+
+            all_raw_table_data_for_processing = []
+            for table_raw_meta_dict in tables_metadata_raw_list:
+                table_meta_dict = lower_keys(table_raw_meta_dict)
+                tname = table_meta_dict["table_name"]
+
+                cursor.execute("SELECT c.column_name, c.column_type, c.column_key, c.is_nullable, c.column_default, c.column_comment, c.character_set_name, c.collation_name, kcu.referenced_table_name, kcu.referenced_column_name FROM information_schema.columns c LEFT JOIN information_schema.key_column_usage kcu ON c.table_schema = kcu.table_schema AND c.table_name = kcu.table_name AND c.column_name = kcu.column_name AND kcu.referenced_table_name IS NOT NULL WHERE c.table_schema = %s AND c.table_name = %s ORDER BY c.ordinal_position", (db_name, tname))
+                columns_data_raw_list = [lower_keys(col_dict) for col_dict in cursor.fetchall()]
+
+                # Add icon_class to columns
+                for col in columns_data_raw_list:
+                    col['icon_class'] = get_column_icon(col['column_type'])
+
+                all_raw_table_data_for_processing.append({
+                    "table_name": tname,
+                    "table_info": decimal_to_float(table_meta_dict),
+                    "columns": decimal_to_float(columns_data_raw_list)
+                })
+
+        # Create tables_data for template
+        tables_data = []
+        for table_bundle_dict in all_raw_table_data_for_processing:
+            tname = table_bundle_dict["table_name"]
+            table_info_dict = table_bundle_dict["table_info"]
+            columns_list = table_bundle_dict["columns"]
+
+            table_data = {
+                "name": tname,
+                "metadata": table_info_dict,
+                "columns": columns_list,
+                "color": get_table_color(tname),
+                "category": get_table_category(tname)
+            }
+            tables_data.append(table_data)
+
+        # Generate markdown content for tables
+        markdown_content = f"# Documentação do Banco de Dados: `{db_name}`\n\n"
+        for table_bundle_dict in all_raw_table_data_for_processing:
+            tname = table_bundle_dict["table_name"]
+            table_info_dict = table_bundle_dict["table_info"]
+            columns_list = table_bundle_dict["columns"]
+
+            table_md_section = f"## Tabela: `{tname}`\n\n"
+            table_md_section += f"- Motor (Engine): `{table_info_dict.get('engine', 'N/A')}`\n"
+            table_md_section += f"- Total de Linhas (aprox.): {format_number(table_info_dict.get('table_rows', 0))}\n"
+            table_md_section += f"- Tamanho em Disco (aprox.): {float(table_info_dict.get('size_mb', 0.0)):.2f} MB\n"
+            if table_info_dict.get('table_collation'):
+                table_md_section += f"- Collation: `{table_info_dict.get('table_collation')}`\n"
+            if table_info_dict.get('create_time'):
+                table_md_section += f"- Data de Criação: {table_info_dict.get('create_time')}\n"
+            if table_info_dict.get('update_time'):
+                table_md_section += f"- Última Atualização: {table_info_dict.get('update_time')}\n"
+            if table_info_dict.get('table_comment'):
+                table_md_section += f"- Comentário da Tabela: {html.escape(str(table_info_dict['table_comment']))}\n"
+            table_md_section += "\n"
+
+            table_md_section += "### Estrutura Detalhada das Colunas\n| Nome da Coluna | Tipo de Dado | Chave | Nulo? | Padrão | Comentário da Coluna | Referência FK |\n|---|---|---|---|---|---|---|\n"
+            for col in columns_list:
+                fk_info = f"→ `{html.escape(str(col['referenced_table_name']))}`.`{html.escape(str(col.get('referenced_column_name', '')))}`" if col.get('referenced_table_name') else ''
+                table_md_section += f"| `{html.escape(str(col['column_name']))}` | `{html.escape(str(col['column_type']))}` | {html.escape(str(col.get('column_key', '')))} | {html.escape(str(col.get('is_nullable', '')))} | {html.escape(str(col.get('column_default', '')))} | {html.escape(str(col.get('column_comment', '')))} | {fk_info} |\n"
+            table_md_section += "\n---\n\n"
+            markdown_content += table_md_section
+
+        # Convert markdown to HTML
+        import markdown
+        markdown_html = markdown.markdown(markdown_content, extensions=['tables', 'fenced_code'])
+
+
+
+
+
+        # Save files to static/diagrams directory
+        static_diagrams_path = os.path.join(current_app.root_path, 'static', 'diagrams')
+        if not os.path.exists(static_diagrams_path):
+            os.makedirs(static_diagrams_path, exist_ok=True)
+
+        # Save markdown content
+        md_file_path = os.path.join(static_diagrams_path, f"{db_name}_schema_documentation.md")
+        with open(md_file_path, 'w', encoding='utf-8') as f:
+            f.write(markdown_content)
+
+        # Save ERD diagram as PNG and SVG
+        erd_png_path = os.path.join(static_diagrams_path, f"{db_name}_ERD")
+        erd_svg_path = os.path.join(static_diagrams_path, f"{db_name}_ERD.svg")
+        dot = graphviz.Digraph(comment=f"ERD for {db_name}")
+        for table_bundle in all_raw_table_data_for_processing:
+            table_name = table_bundle["table_name"]
+            table_info = table_bundle["table_info"]
+            label = f"{table_name}\\n{format_number(table_info.get('table_rows', 0))} rows\\n{float(table_info.get('size_mb', 0.0)):.2f} MB"
+            dot.node(table_name, label=label, shape='box')
+        for table_bundle in all_raw_table_data_for_processing:
+            table_name = table_bundle["table_name"]
+            for col in table_bundle["columns"]:
+                if col.get('referenced_table_name'):
+                    dot.edge(col['referenced_table_name'], table_name, label=col['column_name'])
+        dot.render(erd_png_path, format='png', cleanup=True)
+        with open(erd_svg_path, 'wb') as f:
+            f.write(dot.pipe(format='svg'))
+
+        # Save flow diagram as PNG and SVG
+        flow_png_path = os.path.join(static_diagrams_path, f"{db_name}_DataFlow")
+        flow_svg_path = os.path.join(static_diagrams_path, f"{db_name}_DataFlow.svg")
+        dot_flow = graphviz.Digraph(comment=f"Data Flow for {db_name}")
+        categories = {}
+        for table_bundle in all_raw_table_data_for_processing:
+            cat = get_table_category(table_bundle["table_name"])
+            if cat not in categories:
+                categories[cat] = []
+            categories[cat].append(table_bundle["table_name"])
+        for cat, tables in categories.items():
+            with dot_flow.subgraph(name=f'cluster_{cat}') as sub:
+                sub.attr(label=cat)
+                for table in tables:
+                    sub.node(table, table)
+        for table_bundle in all_raw_table_data_for_processing:
+            table_name = table_bundle["table_name"]
+            for col in table_bundle["columns"]:
+                if col.get('referenced_table_name'):
+                    dot_flow.edge(col['referenced_table_name'], table_name, label=col['column_name'])
+        dot_flow.render(flow_png_path, format='png', cleanup=True)
+        with open(flow_svg_path, 'wb') as f:
+            f.write(dot_flow.pipe(format='svg'))
+
+        # Generate URLs for template
+        erd_png_url = f"/static/diagrams/{db_name}_ERD.png"
+        erd_svg_url = f"/static/diagrams/{db_name}_ERD.svg"
+        flow_png_url = f"/static/diagrams/{db_name}_DataFlow.png"
+        flow_svg_url = f"/static/diagrams/{db_name}_DataFlow.svg"
+        md_url = f"/static/diagrams/{db_name}_schema_documentation.md"
+
+        return render_template('database_analysis.html',
+                             db_name=db_name,
+                             markdown_html=markdown_html,
+                             markdown_url=md_url,
+                             erd_png_url=erd_png_url,
+                             erd_svg_url=erd_svg_url,
+                             flow_png_url=flow_png_url,
+                             flow_svg_url=flow_svg_url,
+                             tables=tables_data,
+                             error=None)
+
+    except Exception as e:
+        error_message = f"Erro ao analisar banco de dados: {str(e)}"
+        current_app.logger.error(error_message)
+        current_app.logger.error(traceback.format_exc())
+        return render_template('database_analysis.html', error=error_message, db_name=db_name)
+    finally:
+        if connection and connection.open:
+            connection.close()
+
+@main_bp.route('/databases/tables/<db_name>')
+@login_required
+@require_access(AREAS['banco_dados'])
+def database_tables(db_name):
+    import os
+    import pymysql
+    import time
+    import traceback
+    import json
+    import html
+    from flask import render_template, current_app
+
+    # Load environment variables from app config
+    config = current_app.config
+
+    # Connect to database and gather metadata
+    connection = None
+    tables_data = []
+    error_message = None
+
+    try:
+        from servidor_app.services.database_service import get_production_mysql_connection
+
+        connection = get_production_mysql_connection(config, db_name)
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT table_name, engine, table_collation, table_comment, create_time, update_time, table_rows, ROUND((data_length + index_length) / 1024 / 1024, 2) AS size_mb FROM information_schema.tables WHERE table_schema = %s ORDER BY table_name", (db_name,))
+            tables_metadata_raw_list = cursor.fetchall()
+
+            if not tables_metadata_raw_list:
+                error_message = f"Nenhuma tabela encontrada no banco de dados '{db_name}'."
+                return render_template('database_tables.html', error=error_message, db_name=db_name)
+
+            for table_raw_meta_dict in tables_metadata_raw_list:
+                table_meta_dict = lower_keys(table_raw_meta_dict)
+                tname = table_meta_dict["table_name"]
+
+                cursor.execute("SELECT c.column_name, c.column_type, c.column_key, c.is_nullable, c.column_default, c.column_comment, c.character_set_name, c.collation_name, kcu.referenced_table_name, kcu.referenced_column_name FROM information_schema.columns c LEFT JOIN information_schema.key_column_usage kcu ON c.table_schema = kcu.table_schema AND c.table_name = kcu.table_name AND c.column_name = kcu.column_name AND kcu.referenced_table_name IS NOT NULL WHERE c.table_schema = %s AND c.table_name = %s ORDER BY c.ordinal_position", (db_name, tname))
+                columns_data_raw_list = [lower_keys(col_dict) for col_dict in cursor.fetchall()]
+
+                table_data = {
+                    "name": tname,
+                    "metadata": decimal_to_float(table_meta_dict),
+                    "columns": decimal_to_float(columns_data_raw_list),
+                    "color": get_table_color(tname),
+                    "category": get_table_category(tname)
+                }
+                tables_data.append(table_data)
+
+        return render_template('database_tables.html', db_name=db_name, tables=tables_data, error=None)
+
+    except Exception as e:
+        error_message = f"Erro ao analisar banco de dados: {str(e)}"
+        current_app.logger.error(error_message)
+        current_app.logger.error(traceback.format_exc())
+        return render_template('database_tables.html', error=error_message, db_name=db_name)
+    finally:
+        if connection and connection.open:
+            connection.close()
 
 @main_bp.route('/sistemas')
 @login_required

@@ -172,11 +172,18 @@
                                     {% endif %}
                                     <span class="fs-6 fw-medium">{{ db_name }}</span>
                                 </div>
-                                <button class="btn btn-sm btn-outline-success download-btn"
-                                        onclick="initiateExportAndDownload('{{ db_name }}')"
-                                        title="Baixar banco de dados {{ db_name }}">
-                                    <i class="bi bi-download"></i>
-                                </button>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-success download-btn"
+                                            onclick="initiateExportAndDownload('{{ db_name }}')"
+                                            title="Baixar banco de dados {{ db_name }}">
+                                        <i class="bi bi-download"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary analyze-btn"
+                                            onclick="analyzeDatabase('{{ db_name }}')"
+                                            title="Analisar banco de dados {{ db_name }}">
+                                        <i class="bi bi-bar-chart-line"></i>
+                                    </button>
+                                </div>
                             </li>
                         {% endfor %}
                     </ul>
@@ -504,6 +511,11 @@ function showAlert(message, type) {
             alertDiv.remove();
         }
     }, 5000);
+}
+
+function analyzeDatabase(dbName) {
+    // Redirecionar para a página de análise
+    window.location.href = `/databases/analyze/${dbName}`;
 }
 </script>
 

@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+
+{% block title %}Análise do Banco: {{ db_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.analysis-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.analysis-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.analysis-header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 300;
+}
+
+.analysis-header p {
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+}
+
+.analysis-section {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.analysis-section h2 {
+    color: #333;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.diagram-container {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.diagram-container img {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.download-links {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.download-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #667eea;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+.download-links a:hover {
+    background: #5a6fd8;
+    color: white;
+}
+
+.markdown-content {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 2rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    max-height: 600px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+    color: #333;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.markdown-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.markdown-content th,
+.markdown-content td {
+    border: 1px solid #ddd;
+    padding: 0.5rem;
+    text-align: left;
+}
+
+.markdown-content th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #6c757d;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    margin-bottom: 2rem;
+    transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+    background: #5a6268;
+    color: white;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .analysis-header {
+        padding: 1.5rem;
+    }
+
+    .analysis-header h1 {
+        font-size: 2rem;
+    }
+
+    .analysis-section {
+        padding: 1.5rem;
+    }
+
+    .download-links {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+/* Added CSS for tables structure */
+.tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.table-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.table-name {
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: #333;
+}
+
+.table-category {
+    font-size: 0.85rem;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    text-transform: capitalize;
+}
+
+.table-metadata {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.metadata-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.table-columns {
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 250px;
+}
+
+.table-columns h5 {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #444;
+}
+
+.columns-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.column-item {
+    background: #f9f9f9;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    box-shadow: inset 0 0 3px rgba(0,0,0,0.05);
+}
+
+.column-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #222;
+}
+
+.column-name {
+    background: #e1e7f5;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-family: monospace;
+}
+
+.column-type {
+    font-style: italic;
+    color: #666;
+}
+
+.badge-key {
+    background: #667eea;
+    color: white;
+    padding: 0.1rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.column-comment {
+    font-size: 0.85rem;
+    color: #555;
+    margin-left: 1.8rem;
+    margin-top: 0.2rem;
+}
+
+.column-foreign-key {
+    font-size: 0.85rem;
+    color: #3a7bd5;
+    margin-left: 1.8rem;
+    margin-top: 0.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="analysis-container">
+        <a href="{{ url_for('main.databases') }}" class="back-button">
+            <i class="bi bi-arrow-left"></i>
+            Voltar
+        </a>
+
+        <div class="analysis-header">
+            <h1>Análise do Banco: {{ db_name }}</h1>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong>Erro na Análise:</strong> {{ error }}
+        </div>
+        {% else %}
+        <div class="mb-3">
+            <a href="{{ markdown_url }}" class="btn btn-primary" target="_blank">
+                <i class="bi bi-download"></i> Baixar Documento
+            </a>
+        </div>
+
+        <div class="analysis-section">
+            <h2>Estrutura das Tabelas</h2>
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered align-middle">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>Tabela</th>
+                            <th>Categoria</th>
+                            <th>Engine</th>
+                            <th>Linhas</th>
+                            <th>Tamanho (MB)</th>
+                            <th>Collation</th>
+                            <th>Colunas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for table_bundle in tables_data %}
+                        <tr>
+                            <td><strong>{{ table_bundle.name }}</strong></td>
+                            <td><span class="badge" style="background-color: {{ table_bundle.color }};">{{ table_bundle.category | title }}</span></td>
+                            <td>{{ table_bundle.metadata.engine or 'N/A' }}</td>
+                            <td>{{ table_bundle.metadata.table_rows | default(0) | number_format }}</td>
+                            <td>{{ table_bundle.metadata.size_mb | default(0) | round(2) }}</td>
+                            <td>{{ table_bundle.metadata.table_collation or '' }}</td>
+                            <td>
+                                <ul class="list-unstyled mb-0">
+                                    {% for column in table_bundle.columns %}
+                                    <li>
+                                        <code>{{ column.column_name }}</code> ({{ column.column_type }})
+                                        {% if column.column_key %}
+                                        <span class="badge bg-info text-dark">{{ column.column_key }}</span>
+                                        {% endif %}
+                                        {% if column.column_comment %}
+                                        <small class="text-muted d-block">{{ column.column_comment }}</small>
+                                        {% endif %}
+                                        {% if column.referenced_table_name %}
+                                        <small class="text-primary d-block">
+                                            <i class="bi bi-arrow-right-circle"></i>
+                                            {{ column.referenced_table_name }}.{{ column.referenced_column_name }}
+                                        </small>
+                                        {% endif %}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Documentação Markdown -->
+        {# Removed Documentação do Banco de Dados section as per user request #}
+
+        <!-- Diagrama ERD -->
+        <div class="analysis-section">
+            <h2><i class="bi bi-diagram-3 me-2"></i>Diagrama de Entidade-Relacionamento (ERD)</h2>
+            <div class="download-links">
+                <a href="{{ erd_png_url }}" target="_blank">
+                    <i class="bi bi-image"></i>
+                    Baixar ERD (PNG)
+                </a>
+                <a href="{{ erd_svg_url }}" target="_blank">
+                    <i class="bi bi-filetype-svg"></i>
+                    Baixar ERD (SVG)
+                </a>
+            </div>
+            <div class="diagram-container">
+                <div style="width: 100%; overflow-x: auto; border: 1px solid #ddd; border-radius: 8px; background: white;">
+                    <img src="{{ erd_png_url }}" alt="ERD Diagram" style="max-width: 100%; height: auto;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Fluxo de Dados -->
+        <div class="analysis-section">
+            <h2><i class="bi bi-graph-up me-2"></i>Fluxo de Dados por Categoria</h2>
+            <div class="download-links">
+                <a href="{{ flow_png_url }}" target="_blank">
+                    <i class="bi bi-image"></i>
+                    Baixar Fluxo (PNG)
+                </a>
+                <a href="{{ flow_svg_url }}" target="_blank">
+                    <i class="bi bi-filetype-svg"></i>
+                    Baixar Fluxo (SVG)
+                </a>
+            </div>
+            <div class="diagram-container">
+                <div style="width: 100%; overflow-x: auto; border: 1px solid #ddd; border-radius: 8px; background: white;">
+                    <img src="{{ flow_png_url }}" alt="Data Flow Diagram" style="max-width: 100%; height: auto;">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+
+
+{% endblock %}

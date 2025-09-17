@@ -15,6 +15,14 @@ login_manager.login_message = 'Por favor, faça login para acessar esta página.
 
 from servidor_app.services.server_info_service import get_server_info
 
+def format_number(num):
+    if num is None:
+        return "0"
+    try:
+        return f"{int(num):,}".replace(",", ".")
+    except (ValueError, TypeError):
+        return str(num)
+
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object('servidor_app.config.Config')
@@ -27,6 +35,9 @@ def create_app(test_config=None):
 
     # Add fromjson filter to Jinja2
     app.jinja_env.filters['fromjson'] = lambda s: json.loads(s) if s else []
+
+    # Add number_format filter to Jinja2
+    app.jinja_env.filters['number_format'] = format_number
 
     # Inicializar as extensões com a aplicação
     db.init_app(app)
