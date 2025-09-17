@@ -202,7 +202,7 @@
 <title>requests</title>
 <polygon fill="none" stroke="black" points="944,-167.5 860.5,-167.5 860.5,-110 944,-110 944,-167.5"/>
 <text text-anchor="middle" x="902.25" y="-150.2" font-family="Times New Roman,serif" font-size="14.00">requests</text>
-<text text-anchor="middle" x="902.25" y="-133.7" font-family="Times New Roman,serif" font-size="14.00">33.091 rows</text>
+<text text-anchor="middle" x="902.25" y="-133.7" font-family="Times New Roman,serif" font-size="14.00">33.092 rows</text>
 <text text-anchor="middle" x="902.25" y="-117.2" font-family="Times New Roman,serif" font-size="14.00">85.08 MB</text>
 </g>
 <!-- entidade&#45;&gt;requests -->
@@ -277,7 +277,7 @@
 <title>user_visit_log</title>
 <polygon fill="none" stroke="black" points="349.5,-57.5 257,-57.5 257,0 349.5,0 349.5,-57.5"/>
 <text text-anchor="middle" x="303.25" y="-40.2" font-family="Times New Roman,serif" font-size="14.00">user_visit_log</text>
-<text text-anchor="middle" x="303.25" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">273.408 rows</text>
+<text text-anchor="middle" x="303.25" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">273.412 rows</text>
 <text text-anchor="middle" x="303.25" y="-7.2" font-family="Times New Roman,serif" font-size="14.00">58.09 MB</text>
 </g>
 <!-- user&#45;&gt;user_visit_log -->

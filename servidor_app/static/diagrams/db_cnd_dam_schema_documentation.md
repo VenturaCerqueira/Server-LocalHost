@@ -197,11 +197,11 @@
 ## Tabela: `requests`
 
 - Motor (Engine): `InnoDB`
-- Total de Linhas (aprox.): 33.091
+- Total de Linhas (aprox.): 33.092
 - Tamanho em Disco (aprox.): 85.08 MB
 - Collation: `utf8mb3_general_ci`
 - Data de Criação: 2024-04-17 22:51:15
-- Última Atualização: 2025-09-17 18:37:40
+- Última Atualização: 2025-09-17 20:21:12
 
 
 ---
@@ -220,11 +220,11 @@
 ## Tabela: `user_visit_log`
 
 - Motor (Engine): `InnoDB`
-- Total de Linhas (aprox.): 273.408
+- Total de Linhas (aprox.): 273.412
 - Tamanho em Disco (aprox.): 58.09 MB
 - Collation: `utf8mb3_general_ci`
 - Data de Criação: 2024-04-17 22:51:43
-- Última Atualização: 2025-09-17 19:50:50
+- Última Atualização: 2025-09-17 20:38:19
 
 
 ---

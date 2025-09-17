@@ -10,7 +10,7 @@
 {% block content %}
 <div class="container-fluid">
     <div class="analysis-container">
-        <div class="download-links" style="justify-content: flex-end; gap: 1rem; margin-bottom: 1rem; display: flex; flex-direction: row; align-items: center;">
+        <div class="download-links header-links">
             <a href="{{ markdown_url }}" class="btn btn-success" target="_blank" style="order: 2;">
                 <i class="bi bi-download me-2"></i> Baixar Documento
             </a>
@@ -39,66 +39,48 @@
                 <div class="table-header">
                     <span class="table-category badge" style="background-color: {{ table.color }};">{{ table.category }}</span>
                 </div>
-                <div class="table-metadata">
-                    <div class="metadata-item">
-                        <i class="bi bi-hdd"></i>
-                        <span>{{ table.metadata.engine or 'N/A' }}</span>
-                    </div>
-                    <div class="metadata-item">
-                        <i class="bi bi-file-earmark-bar-graph"></i>
-                        <span>{{ table.metadata.table_rows | default(0) | number_format }} linhas</span>
-                    </div>
-                    <div class="metadata-item">
-                        <i class="bi bi-database"></i>
-                        <span>{{ table.metadata.size_mb | default(0) | round(2) }} MB</span>
-                    </div>
+                <div class="table-metadata-badges">
+                    <span class="badge bg-primary me-2 mb-2">
+                        <i class="bi bi-hdd me-1"></i>{{ table.metadata.engine or 'N/A' }}
+                    </span>
+                    <span class="badge bg-success me-2 mb-2">
+                        <i class="bi bi-file-earmark-bar-graph me-1"></i>{{ table.metadata.table_rows | default(0) | number_format }} linhas
+                    </span>
+                    <span class="badge bg-info me-2 mb-2">
+                        <i class="bi bi-database me-1"></i>{{ table.metadata.size_mb | default(0) | round(2) }} MB
+                    </span>
                     {% if table.metadata.create_time %}
-                    <div class="metadata-item">
-                        <i class="bi bi-calendar-plus"></i>
-                        <span>Criado: {{ table.metadata.create_time }}</span>
-                    </div>
+                    <span class="badge bg-warning text-dark me-2 mb-2">
+                        <i class="bi bi-calendar-plus me-1"></i>Criado: {{ table.metadata.create_time }}
+                    </span>
                     {% endif %}
                 </div>
-                <div class="table-columns">
-                    <h5><i class="bi bi-list-columns me-1"></i>Colunas</h5>
-                    <table class="columns-table">
-                        <thead>
-                            <tr>
-                                <th>Nome da Coluna</th>
-                                <th>Tipo</th>
-                                <th>Chave</th>
-                                <th>Comentário</th>
-                                <th>Referência</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for col in table.columns %}
-                            <tr>
-                                <td><span class="column-name">{{ col.column_name }}</span></td>
-                                <td><span class="column-type">{{ col.column_type }}</span></td>
-                                <td>
-                                    {% if col.column_key == 'PRI' %}
-                                    <span class="badge-key">PK</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if col.column_comment %}
-                                    <span class="column-comment">{{ col.column_comment }}</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if col.referenced_table_name %}
-                                    <span class="column-foreign-key">
-                                        <i class="bi bi-arrow-right"></i>
-                                        {{ col.referenced_table_name }}.{{ col.referenced_column_name }}
-                                    </span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        <div class="table-columns">
+            <h5><i class="bi bi-list-columns me-1"></i>Colunas</h5>
+            <div class="list-group">
+                {% for col in table.columns %}
+                <div class="list-group-item flex-column align-items-start">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1 column-name">{{ col.column_name }}</h5>
+                        <small class="text-muted">{{ col.column_type }}</small>
+                    </div>
+                    <p class="mb-1">
+                        <span><i class="bi bi-key-fill me-1"></i><strong>Chave:</strong> {% if col.column_key == 'PRI' %}PK{% else %} - {% endif %}</span> |
+                        <span><i class="bi bi-toggle-on me-1"></i><strong>Nulo?</strong> {% if col.is_nullable == 'YES' %}Sim{% else %}Não{% endif %}</span> |
+                        <span><i class="bi bi-slash-circle me-1"></i><strong>Padrão:</strong> {{ col.column_default if col.column_default is not none else '-' }}</span>
+                    </p>
+                    <small class="text-muted">
+                        {% if col.column_comment %}
+                        <i class="bi bi-chat-left-text me-1"></i>Comentário: {{ col.column_comment }}<br>
+                        {% endif %}
+                        {% if col.referenced_table_name %}
+                        <i class="bi bi-arrow-right me-1"></i>Referência FK: {{ col.referenced_table_name }}.{{ col.referenced_column_name }}
+                        {% endif %}
+                    </small>
                 </div>
+                {% endfor %}
+            </div>
+        </div>
             </div>
         </div>
         {% endfor %}
