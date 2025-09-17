@@ -1,65 +1,65 @@
 {
-  "total_requests": 23,
-  "total_response_time": 9.11819052696228,
+  "total_requests": 14,
+  "total_response_time": 3.821911096572876,
   "endpoint_metrics": {
-    "GET main.analyze_database": {
-      "count": 4,
-      "total_time": 7.415501832962036,
-      "avg_time": 1.853875458240509,
-      "min_time": 0.0006275177001953125,
-      "max_time": 2.7078161239624023,
+    "GET main.index": {
+      "count": 2,
+      "total_time": 0.08537697792053223,
+      "avg_time": 0.04268848896026611,
+      "min_time": 0.0010895729064941406,
+      "max_time": 0.08428740501403809,
       "status_codes": {
         "302": 1,
-        "200": 3
+        "200": 1
       }
     },
     "GET main.login": {
       "count": 1,
-      "total_time": 0.5172531604766846,
-      "avg_time": 0.5172531604766846,
-      "min_time": 0.5172531604766846,
-      "max_time": 0.5172531604766846,
+      "total_time": 0.5706760883331299,
+      "avg_time": 0.5706760883331299,
+      "min_time": 0.5706760883331299,
+      "max_time": 0.5706760883331299,
       "status_codes": {
         "200": 1
       }
     },
     "POST main.login": {
       "count": 1,
-      "total_time": 0.2067577838897705,
-      "avg_time": 0.2067577838897705,
-      "min_time": 0.2067577838897705,
-      "max_time": 0.2067577838897705,
+      "total_time": 0.17257356643676758,
+      "avg_time": 0.17257356643676758,
+      "min_time": 0.17257356643676758,
+      "max_time": 0.17257356643676758,
       "status_codes": {
         "302": 1
       }
     },
-    "GET main.index": {
-      "count": 1,
-      "total_time": 0.17760276794433594,
-      "avg_time": 0.17760276794433594,
-      "min_time": 0.17760276794433594,
-      "max_time": 0.17760276794433594,
-      "status_codes": {
-        "200": 1
-      }
-    },
     "GET static": {
-      "count": 15,
-      "total_time": 0.12636017799377441,
-      "avg_time": 0.008424011866251628,
-      "min_time": 0.0006289482116699219,
-      "max_time": 0.09830689430236816,
+      "count": 8,
+      "total_time": 0.13422560691833496,
+      "avg_time": 0.01677820086479187,
+      "min_time": 0.0005238056182861328,
+      "max_time": 0.12820172309875488,
       "status_codes": {
-        "200": 6,
-        "304": 9
+        "304": 7,
+        "200": 1
       }
     },
     "GET main.databases": {
       "count": 1,
-      "total_time": 0.6747148036956787,
-      "avg_time": 0.6747148036956787,
-      "min_time": 0.6747148036956787,
-      "max_time": 0.6747148036956787,
+      "total_time": 0.6063320636749268,
+      "avg_time": 0.6063320636749268,
+      "min_time": 0.6063320636749268,
+      "max_time": 0.6063320636749268,
+      "status_codes": {
+        "200": 1
+      }
+    },
+    "GET main.analyze_database": {
+      "count": 1,
+      "total_time": 2.2527267932891846,
+      "avg_time": 2.2527267932891846,
+      "min_time": 2.2527267932891846,
+      "max_time": 2.2527267932891846,
       "status_codes": {
         "200": 1
       }

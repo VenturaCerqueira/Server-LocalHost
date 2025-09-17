@@ -13,7 +13,7 @@
 <title>audit_trail_entry</title>
 <polygon fill="none" stroke="black" points="746.25,-497.5 640.25,-497.5 640.25,-440 746.25,-440 746.25,-497.5"/>
 <text text-anchor="middle" x="693.25" y="-480.2" font-family="Times New Roman,serif" font-size="14.00">audit_trail_entry</text>
-<text text-anchor="middle" x="693.25" y="-463.7" font-family="Times New Roman,serif" font-size="14.00">313.076 rows</text>
+<text text-anchor="middle" x="693.25" y="-463.7" font-family="Times New Roman,serif" font-size="14.00">313.091 rows</text>
 <text text-anchor="middle" x="693.25" y="-447.2" font-family="Times New Roman,serif" font-size="14.00">89.66 MB</text>
 </g>
 <!-- auth_assignment -->
@@ -119,7 +119,7 @@
 <title>cnd</title>
 <polygon fill="none" stroke="black" points="937,-57.5 853.5,-57.5 853.5,0 937,0 937,-57.5"/>
 <text text-anchor="middle" x="895.25" y="-40.2" font-family="Times New Roman,serif" font-size="14.00">cnd</text>
-<text text-anchor="middle" x="895.25" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">63.163 rows</text>
+<text text-anchor="middle" x="895.25" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">63.169 rows</text>
 <text text-anchor="middle" x="895.25" y="-7.2" font-family="Times New Roman,serif" font-size="14.00">5.03 MB</text>
 </g>
 <!-- contribuinte -->
@@ -127,7 +127,7 @@
 <title>contribuinte</title>
 <polygon fill="none" stroke="black" points="842.38,-167.5 752.12,-167.5 752.12,-110 842.38,-110 842.38,-167.5"/>
 <text text-anchor="middle" x="797.25" y="-150.2" font-family="Times New Roman,serif" font-size="14.00">contribuinte</text>
-<text text-anchor="middle" x="797.25" y="-133.7" font-family="Times New Roman,serif" font-size="14.00">196.519 rows</text>
+<text text-anchor="middle" x="797.25" y="-133.7" font-family="Times New Roman,serif" font-size="14.00">196.520 rows</text>
 <text text-anchor="middle" x="797.25" y="-117.2" font-family="Times New Roman,serif" font-size="14.00">32.08 MB</text>
 </g>
 <!-- contribuinte&#45;&gt;cnd -->
@@ -202,7 +202,7 @@
 <title>requests</title>
 <polygon fill="none" stroke="black" points="944,-167.5 860.5,-167.5 860.5,-110 944,-110 944,-167.5"/>
 <text text-anchor="middle" x="902.25" y="-150.2" font-family="Times New Roman,serif" font-size="14.00">requests</text>
-<text text-anchor="middle" x="902.25" y="-133.7" font-family="Times New Roman,serif" font-size="14.00">33.092 rows</text>
+<text text-anchor="middle" x="902.25" y="-133.7" font-family="Times New Roman,serif" font-size="14.00">33.091 rows</text>
 <text text-anchor="middle" x="902.25" y="-117.2" font-family="Times New Roman,serif" font-size="14.00">85.08 MB</text>
 </g>
 <!-- entidade&#45;&gt;requests -->
@@ -277,7 +277,7 @@
 <title>user_visit_log</title>
 <polygon fill="none" stroke="black" points="349.5,-57.5 257,-57.5 257,0 349.5,0 349.5,-57.5"/>
 <text text-anchor="middle" x="303.25" y="-40.2" font-family="Times New Roman,serif" font-size="14.00">user_visit_log</text>
-<text text-anchor="middle" x="303.25" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">273.375 rows</text>
+<text text-anchor="middle" x="303.25" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">273.408 rows</text>
 <text text-anchor="middle" x="303.25" y="-7.2" font-family="Times New Roman,serif" font-size="14.00">58.09 MB</text>
 </g>
 <!-- user&#45;&gt;user_visit_log -->

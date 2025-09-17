@@ -12,6 +12,13 @@ from servidor_app.controllers.permissions import require_access, AREAS
 from servidor_app import db
 import json
 import graphviz
+import os
+import pymysql
+import time
+import traceback
+import html
+from decimal import Decimal
+
 
 
 def lower_keys(d):
@@ -81,6 +88,8 @@ def get_column_icon(column_type):
         return 'bi-toggle-on'
     else:
         return 'bi-code'
+
+
 
 main_bp = Blueprint('main', __name__)
 
@@ -273,6 +282,9 @@ def analyze_database(db_name):
             }
             tables_data.append(table_data)
 
+        # AI Analysis Integration removed
+        ai_insights = None
+
         # Generate markdown content for tables
         markdown_content = f"# Documentação do Banco de Dados: `{db_name}`\n\n"
         for table_bundle_dict in all_raw_table_data_for_processing:
@@ -294,10 +306,22 @@ def analyze_database(db_name):
                 table_md_section += f"- Comentário da Tabela: {html.escape(str(table_info_dict['table_comment']))}\n"
             table_md_section += "\n"
 
-            table_md_section += "### Estrutura Detalhada das Colunas\n| Nome da Coluna | Tipo de Dado | Chave | Nulo? | Padrão | Comentário da Coluna | Referência FK |\n|---|---|---|---|---|---|---|\n"
-            for col in columns_list:
-                fk_info = f"→ `{html.escape(str(col['referenced_table_name']))}`.`{html.escape(str(col.get('referenced_column_name', '')))}`" if col.get('referenced_table_name') else ''
-                table_md_section += f"| `{html.escape(str(col['column_name']))}` | `{html.escape(str(col['column_type']))}` | {html.escape(str(col.get('column_key', '')))} | {html.escape(str(col.get('is_nullable', '')))} | {html.escape(str(col.get('column_default', '')))} | {html.escape(str(col.get('column_comment', '')))} | {fk_info} |\n"
+            # Group columns by type
+            pk_columns = [col for col in columns_list if col.get('column_key') == 'PRI']
+            fk_columns = [col for col in columns_list if col.get('referenced_table_name')]
+            other_columns = [col for col in columns_list if col not in pk_columns and col not in fk_columns]
+
+            def add_column_table(title, cols):
+                if not cols:
+                    return ""
+                md = f"#### {title}\n| Nome da Coluna | Tipo de Dado | Charset | Collation | Chave | Nulo? | Padrão | Comentário da Coluna | Referência FK |\n|---|---|---|---|---|---|---|---|---|\n"
+                for col in cols:
+                    fk_info = f"→ `{html.escape(str(col['referenced_table_name']))}`.`{html.escape(str(col.get('referenced_column_name', '')))}`" if col.get('referenced_table_name') else ''
+                    md += f"| `{html.escape(str(col['column_name']))}` | `{html.escape(str(col['column_type']))}` | {html.escape(str(col.get('character_set_name', '')))} | {html.escape(str(col.get('collation_name', '')))} | {html.escape(str(col.get('column_key', '')))} | {html.escape(str(col.get('is_nullable', '')))} | {html.escape(str(col.get('column_default', '')))} | {html.escape(str(col.get('column_comment', '')))} | {fk_info} |\n"
+                md += "\n"
+                return md
+
+
             table_md_section += "\n---\n\n"
             markdown_content += table_md_section
 
@@ -377,6 +401,7 @@ def analyze_database(db_name):
                              flow_png_url=flow_png_url,
                              flow_svg_url=flow_svg_url,
                              tables=tables_data,
+                             ai_insights=ai_insights,
                              error=None)
 
     except Exception as e:

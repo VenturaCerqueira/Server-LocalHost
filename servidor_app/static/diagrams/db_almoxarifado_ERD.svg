@@ -51,7 +51,7 @@
 <title>item_almoxarifado</title>
 <polygon fill="none" stroke="black" points="2463.12,-167.5 2342.88,-167.5 2342.88,-110 2463.12,-110 2463.12,-167.5"/>
 <text text-anchor="middle" x="2403" y="-150.2" font-family="Times New Roman,serif" font-size="14.00">item_almoxarifado</text>
-<text text-anchor="middle" x="2403" y="-133.7" font-family="Times New Roman,serif" font-size="14.00">13.422 rows</text>
+<text text-anchor="middle" x="2403" y="-133.7" font-family="Times New Roman,serif" font-size="14.00">13.436 rows</text>
 <text text-anchor="middle" x="2403" y="-117.2" font-family="Times New Roman,serif" font-size="14.00">2.36 MB</text>
 </g>
 <!-- almoxarifado&#45;&gt;item_almoxarifado -->
@@ -81,7 +81,7 @@
 <title>movimentacao_geral</title>
 <polygon fill="none" stroke="black" points="1142.38,-167.5 1011.62,-167.5 1011.62,-110 1142.38,-110 1142.38,-167.5"/>
 <text text-anchor="middle" x="1077" y="-150.2" font-family="Times New Roman,serif" font-size="14.00">movimentacao_geral</text>
-<text text-anchor="middle" x="1077" y="-133.7" font-family="Times New Roman,serif" font-size="14.00">18.932 rows</text>
+<text text-anchor="middle" x="1077" y="-133.7" font-family="Times New Roman,serif" font-size="14.00">18.936 rows</text>
 <text text-anchor="middle" x="1077" y="-117.2" font-family="Times New Roman,serif" font-size="14.00">4.75 MB</text>
 </g>
 <!-- almoxarifado&#45;&gt;movimentacao_geral -->
@@ -103,7 +103,7 @@
 <title>requisicao</title>
 <polygon fill="none" stroke="black" points="886.75,-277.5 803.25,-277.5 803.25,-220 886.75,-220 886.75,-277.5"/>
 <text text-anchor="middle" x="845" y="-260.2" font-family="Times New Roman,serif" font-size="14.00">requisicao</text>
-<text text-anchor="middle" x="845" y="-243.7" font-family="Times New Roman,serif" font-size="14.00">18.430 rows</text>
+<text text-anchor="middle" x="845" y="-243.7" font-family="Times New Roman,serif" font-size="14.00">18.432 rows</text>
 <text text-anchor="middle" x="845" y="-227.2" font-family="Times New Roman,serif" font-size="14.00">4.81 MB</text>
 </g>
 <!-- almoxarifado&#45;&gt;requisicao -->
@@ -118,7 +118,7 @@
 <title>requisicao_transferencia</title>
 <polygon fill="none" stroke="black" points="1812,-277.5 1664,-277.5 1664,-220 1812,-220 1812,-277.5"/>
 <text text-anchor="middle" x="1738" y="-260.2" font-family="Times New Roman,serif" font-size="14.00">requisicao_transferencia</text>
-<text text-anchor="middle" x="1738" y="-243.7" font-family="Times New Roman,serif" font-size="14.00">430 rows</text>
+<text text-anchor="middle" x="1738" y="-243.7" font-family="Times New Roman,serif" font-size="14.00">431 rows</text>
 <text text-anchor="middle" x="1738" y="-227.2" font-family="Times New Roman,serif" font-size="14.00">0.09 MB</text>
 </g>
 <!-- almoxarifado&#45;&gt;requisicao_transferencia -->
@@ -148,7 +148,7 @@
 <title>audit_trail_entry</title>
 <polygon fill="none" stroke="black" points="1122,-1019.5 1016,-1019.5 1016,-962 1122,-962 1122,-1019.5"/>
 <text text-anchor="middle" x="1069" y="-1002.2" font-family="Times New Roman,serif" font-size="14.00">audit_trail_entry</text>
-<text text-anchor="middle" x="1069" y="-985.7" font-family="Times New Roman,serif" font-size="14.00">83.329 rows</text>
+<text text-anchor="middle" x="1069" y="-985.7" font-family="Times New Roman,serif" font-size="14.00">83.382 rows</text>
 <text text-anchor="middle" x="1069" y="-969.2" font-family="Times New Roman,serif" font-size="14.00">36.59 MB</text>
 </g>
 <!-- auth_assignment -->
@@ -410,7 +410,7 @@
 <title>nota_fiscal</title>
 <polygon fill="none" stroke="black" points="156.38,-463 79.62,-463 79.62,-405.5 156.38,-405.5 156.38,-463"/>
 <text text-anchor="middle" x="118" y="-445.7" font-family="Times New Roman,serif" font-size="14.00">nota_fiscal</text>
-<text text-anchor="middle" x="118" y="-429.2" font-family="Times New Roman,serif" font-size="14.00">6.286 rows</text>
+<text text-anchor="middle" x="118" y="-429.2" font-family="Times New Roman,serif" font-size="14.00">6.277 rows</text>
 <text text-anchor="middle" x="118" y="-412.7" font-family="Times New Roman,serif" font-size="14.00">0.44 MB</text>
 </g>
 <!-- fornecedor&#45;&gt;nota_fiscal -->
@@ -447,7 +447,7 @@
 <title>item_movimentacao</title>
 <polygon fill="none" stroke="black" points="2024.25,-57.5 1895.75,-57.5 1895.75,0 2024.25,0 2024.25,-57.5"/>
 <text text-anchor="middle" x="1960" y="-40.2" font-family="Times New Roman,serif" font-size="14.00">item_movimentacao</text>
-<text text-anchor="middle" x="1960" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">130.628 rows</text>
+<text text-anchor="middle" x="1960" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">130.471 rows</text>
 <text text-anchor="middle" x="1960" y="-7.2" font-family="Times New Roman,serif" font-size="14.00">15.06 MB</text>
 </g>
 <!-- item_requisicao_entrega -->
@@ -455,7 +455,7 @@
 <title>item_requisicao_entrega</title>
 <polygon fill="none" stroke="black" points="2365.75,-57.5 2216.25,-57.5 2216.25,0 2365.75,0 2365.75,-57.5"/>
 <text text-anchor="middle" x="2291" y="-40.2" font-family="Times New Roman,serif" font-size="14.00">item_requisicao_entrega</text>
-<text text-anchor="middle" x="2291" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">47.059 rows</text>
+<text text-anchor="middle" x="2291" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">47.058 rows</text>
 <text text-anchor="middle" x="2291" y="-7.2" font-family="Times New Roman,serif" font-size="14.00">5.55 MB</text>
 </g>
 <!-- item_requisicao_transferencia_entrega -->
@@ -463,7 +463,7 @@
 <title>item_requisicao_transferencia_entrega</title>
 <polygon fill="none" stroke="black" points="2663,-57.5 2437,-57.5 2437,0 2663,0 2663,-57.5"/>
 <text text-anchor="middle" x="2550" y="-40.2" font-family="Times New Roman,serif" font-size="14.00">item_requisicao_transferencia_entrega</text>
-<text text-anchor="middle" x="2550" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">1.833 rows</text>
+<text text-anchor="middle" x="2550" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">1.845 rows</text>
 <text text-anchor="middle" x="2550" y="-7.2" font-family="Times New Roman,serif" font-size="14.00">0.23 MB</text>
 </g>
 <!-- itens_requisicao -->
@@ -471,7 +471,7 @@
 <title>itens_requisicao</title>
 <polygon fill="none" stroke="black" points="1890.88,-167.5 1787.12,-167.5 1787.12,-110 1890.88,-110 1890.88,-167.5"/>
 <text text-anchor="middle" x="1839" y="-150.2" font-family="Times New Roman,serif" font-size="14.00">itens_requisicao</text>
-<text text-anchor="middle" x="1839" y="-133.7" font-family="Times New Roman,serif" font-size="14.00">49.700 rows</text>
+<text text-anchor="middle" x="1839" y="-133.7" font-family="Times New Roman,serif" font-size="14.00">49.702 rows</text>
 <text text-anchor="middle" x="1839" y="-117.2" font-family="Times New Roman,serif" font-size="14.00">6.55 MB</text>
 </g>
 <!-- itens_requisicao&#45;&gt;item_requisicao_entrega -->
@@ -486,7 +486,7 @@
 <title>itens_transferencia</title>
 <polygon fill="none" stroke="black" points="2156,-167.5 2038,-167.5 2038,-110 2156,-110 2156,-167.5"/>
 <text text-anchor="middle" x="2097" y="-150.2" font-family="Times New Roman,serif" font-size="14.00">itens_transferencia</text>
-<text text-anchor="middle" x="2097" y="-133.7" font-family="Times New Roman,serif" font-size="14.00">1.850 rows</text>
+<text text-anchor="middle" x="2097" y="-133.7" font-family="Times New Roman,serif" font-size="14.00">1.863 rows</text>
 <text text-anchor="middle" x="2097" y="-117.2" font-family="Times New Roman,serif" font-size="14.00">0.25 MB</text>
 </g>
 <!-- itens_transferencia&#45;&gt;item_requisicao_transferencia_entrega -->
@@ -799,7 +799,7 @@
 <title>user_visit_log</title>
 <polygon fill="none" stroke="black" points="1320.25,-1019.5 1227.75,-1019.5 1227.75,-962 1320.25,-962 1320.25,-1019.5"/>
 <text text-anchor="middle" x="1274" y="-1002.2" font-family="Times New Roman,serif" font-size="14.00">user_visit_log</text>
-<text text-anchor="middle" x="1274" y="-985.7" font-family="Times New Roman,serif" font-size="14.00">16.695 rows</text>
+<text text-anchor="middle" x="1274" y="-985.7" font-family="Times New Roman,serif" font-size="14.00">16.693 rows</text>
 <text text-anchor="middle" x="1274" y="-969.2" font-family="Times New Roman,serif" font-size="14.00">3.91 MB</text>
 </g>
 </g>

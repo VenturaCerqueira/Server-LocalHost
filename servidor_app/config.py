@@ -82,3 +82,7 @@ class Config:
     except (ValueError, TypeError):
         print("AVISO: PROD_DB_PORT inválida. Usando porta padrão 3306.")
         PROD_DB_PORT = 3306
+
+    # --- Configurações para Análise com IA Gemini ---
+    GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
+    GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-1.5-flash-latest')
