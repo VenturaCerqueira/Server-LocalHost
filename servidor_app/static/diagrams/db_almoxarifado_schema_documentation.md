@@ -430,7 +430,7 @@
 ## Tabela: `user_visit_log`
 
 - Motor (Engine): `InnoDB`
-- Total de Linhas (aprox.): 16.693
+- Total de Linhas (aprox.): 16.692
 - Tamanho em Disco (aprox.): 3.91 MB
 - Collation: `utf8mb3_general_ci`
 - Data de Criação: 2024-04-17 22:33:16

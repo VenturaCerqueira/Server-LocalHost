@@ -204,6 +204,37 @@
     </div>
 </div>
 
+<!-- Modal de Análise de Banco -->
+<div class="modal fade" id="analyzeModal" tabindex="-1" aria-labelledby="analyzeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="analyzeModalLabel">
+                    <i class="bi bi-bar-chart-line me-2"></i>Análise do Banco de Dados
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Progresso da Análise</label>
+                    <div class="progress">
+                        <div class="progress-bar" id="analyzeProgress" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div id="analyzeLogContent" class="bg-dark text-light p-3 rounded" style="font-family: monospace; font-size: 0.875rem; max-height: 300px; overflow-y: auto;">
+                    <div class="text-center text-muted">
+                        <i class="bi bi-hourglass-split fs-4 mb-2"></i>
+                        <br>Iniciando análise do banco de dados...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function downloadDatabase(dbName, button = null) {
     // Mostrar loading no botão
@@ -514,8 +545,81 @@ function showAlert(message, type) {
 }
 
 function analyzeDatabase(dbName) {
-    // Redirecionar para a página de análise
-    window.location.href = `/databases/analyze/${dbName}`;
+    // Criar modal para mostrar o progresso da análise
+    const modal = document.getElementById('analyzeModal');
+    const bsModal = new bootstrap.Modal(modal, {
+        backdrop: 'static',
+        keyboard: false
+    });
+    bsModal.show();
+
+    // Iniciar análise com progresso
+    startAnalysisWithProgress(dbName, modal);
+}
+
+function startAnalysisWithProgress(dbName, modal) {
+    const logContent = modal.querySelector('#analyzeLogContent');
+    const progressBar = modal.querySelector('#analyzeProgress');
+    const startTime = new Date();
+
+    // Limpar conteúdo anterior
+    logContent.innerHTML = '';
+
+    // Adicionar timestamp inicial
+    addLogEntry(logContent, `Iniciando análise do banco ${dbName}...`, 'info');
+    addLogEntry(logContent, `Timestamp: ${startTime.toLocaleString()}`, 'info');
+    addLogEntry(logContent, '', 'info');
+
+    // Simular processo de análise com barra de progresso
+    simulateAnalysisProcessWithProgress(logContent, progressBar, dbName, startTime, () => {
+        // Após análise completa, fechar modal e redirecionar
+        const bsModal = bootstrap.Modal.getInstance(modal);
+        bsModal.hide();
+        window.location.href = `/databases/analyze/${dbName}`;
+    });
+}
+
+function simulateAnalysisProcessWithProgress(logContent, progressBar, dbName, startTime, onComplete) {
+    const steps = [
+        { message: 'Conectando ao banco de dados...', delay: 500 },
+        { message: 'Verificando permissões e estrutura...', delay: 300 },
+        { message: 'Coletando metadados das tabelas...', delay: 800 },
+        { message: 'Analisando colunas e relacionamentos...', delay: 1000 },
+        { message: 'Gerando diagrama ERD...', delay: 1500 },
+        { message: 'Gerando diagrama de fluxo de dados...', delay: 1200 },
+        { message: 'Criando documentação em Markdown...', delay: 600 },
+        { message: 'Salvando diagramas e arquivos...', delay: 400 },
+        { message: 'Análise concluída com sucesso!', delay: 200, type: 'success' }
+    ];
+
+    let currentStep = 0;
+
+    function executeStep() {
+        if (currentStep < steps.length) {
+            const step = steps[currentStep];
+            addLogEntry(logContent, step.message, step.type || 'info');
+
+            // Atualizar barra de progresso
+            const progress = ((currentStep + 1) / steps.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressBar.setAttribute('aria-valuenow', progress);
+
+            currentStep++;
+            setTimeout(executeStep, step.delay);
+        } else {
+            // Finalizar
+            const endTime = new Date();
+            const duration = (endTime - startTime) / 1000;
+            addLogEntry(logContent, '', 'info');
+            addLogEntry(logContent, `Tempo total: ${duration.toFixed(2)} segundos`, 'success');
+            addLogEntry(logContent, `Redirecionando para página de análise...`, 'success');
+
+            // Chamar callback para redirecionamento
+            setTimeout(onComplete, 500);
+        }
+    }
+
+    executeStep();
 }
 </script>
 
