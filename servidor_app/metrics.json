@@ -1,143 +1,59 @@
 {
-  "total_requests": 80,
-  "total_response_time": 64.02941489219666,
+  "total_requests": 32,
+  "total_response_time": 6.3480048179626465,
   "endpoint_metrics": {
-    "GET main.analyze_database": {
-      "count": 4,
-      "total_time": 10.572154521942139,
-      "avg_time": 2.6430386304855347,
-      "min_time": 0.00030541419982910156,
-      "max_time": 4.257156610488892,
+    "GET main.databases": {
+      "count": 9,
+      "total_time": 5.3042285442352295,
+      "avg_time": 0.5893587271372477,
+      "min_time": 0.005136966705322266,
+      "max_time": 1.5903637409210205,
       "status_codes": {
         "302": 1,
-        "200": 3
+        "200": 8
       }
     },
     "GET main.login": {
-      "count": 2,
-      "total_time": 0.42787718772888184,
-      "avg_time": 0.21393859386444092,
-      "min_time": 0.0008821487426757812,
-      "max_time": 0.42699503898620605,
+      "count": 1,
+      "total_time": 0.47841644287109375,
+      "avg_time": 0.47841644287109375,
+      "min_time": 0.47841644287109375,
+      "max_time": 0.47841644287109375,
       "status_codes": {
-        "200": 2
+        "200": 1
       }
     },
     "POST main.login": {
-      "count": 2,
-      "total_time": 0.32757091522216797,
-      "avg_time": 0.16378545761108398,
-      "min_time": 0.16323041915893555,
-      "max_time": 0.16434049606323242,
+      "count": 1,
+      "total_time": 0.26117992401123047,
+      "avg_time": 0.26117992401123047,
+      "min_time": 0.26117992401123047,
+      "max_time": 0.26117992401123047,
       "status_codes": {
-        "302": 2
+        "302": 1
       }
     },
     "GET main.index": {
-      "count": 3,
-      "total_time": 0.17003202438354492,
-      "avg_time": 0.05667734146118164,
-      "min_time": 0.021368980407714844,
-      "max_time": 0.09374856948852539,
+      "count": 1,
+      "total_time": 0.12712812423706055,
+      "avg_time": 0.12712812423706055,
+      "min_time": 0.12712812423706055,
+      "max_time": 0.12712812423706055,
       "status_codes": {
-        "200": 3
+        "200": 1
       }
     },
     "GET static": {
-      "count": 54,
-      "total_time": 0.2703087329864502,
-      "avg_time": 0.0050057172775268555,
-      "min_time": 0.0003223419189453125,
-      "max_time": 0.1386418342590332,
+      "count": 20,
+      "total_time": 0.17705178260803223,
+      "avg_time": 0.00885258913040161,
+      "min_time": 0.0003986358642578125,
+      "max_time": 0.15628933906555176,
       "status_codes": {
-        "304": 49,
-        "200": 5
-      }
-    },
-    "GET main.databases": {
-      "count": 7,
-      "total_time": 5.378904581069946,
-      "avg_time": 0.7684149401528495,
-      "min_time": 0.4816865921020508,
-      "max_time": 1.4060068130493164,
-      "status_codes": {
-        "200": 7
-      }
-    },
-    "GET main.download_database": {
-      "count": 1,
-      "total_time": 40.58953022956848,
-      "avg_time": 40.58953022956848,
-      "min_time": 40.58953022956848,
-      "max_time": 40.58953022956848,
-      "status_codes": {
-        "200": 1
-      }
-    },
-    "GET main.sistemas": {
-      "count": 2,
-      "total_time": 0.16003870964050293,
-      "avg_time": 0.08001935482025146,
-      "min_time": 0.045114994049072266,
-      "max_time": 0.11492371559143066,
-      "status_codes": {
-        "200": 2
-      }
-    },
-    "GET main.portal": {
-      "count": 1,
-      "total_time": 0.1481022834777832,
-      "avg_time": 0.1481022834777832,
-      "min_time": 0.1481022834777832,
-      "max_time": 0.1481022834777832,
-      "status_codes": {
-        "200": 1
-      }
-    },
-    "GET main.licitacoes": {
-      "count": 1,
-      "total_time": 0.042896270751953125,
-      "avg_time": 0.042896270751953125,
-      "min_time": 0.042896270751953125,
-      "max_time": 0.042896270751953125,
-      "status_codes": {
-        "200": 1
-      }
-    },
-    "GET main.dropbox": {
-      "count": 2,
-      "total_time": 5.941891431808472,
-      "avg_time": 2.970945715904236,
-      "min_time": 2.0315914154052734,
-      "max_time": 3.9103000164031982,
-      "status_codes": {
-        "200": 2
-      }
-    },
-    "GET git_api.git_pull_project": {
-      "count": 1,
-      "total_time": 0.00010800361633300781,
-      "avg_time": 0.00010800361633300781,
-      "min_time": 0.00010800361633300781,
-      "max_time": 0.00010800361633300781,
-      "status_codes": {
-        "200": 1
+        "304": 20
       }
     }
   },
-  "slow_requests": [
-    {
-      "timestamp": "2025-09-17T17:55:37.239517",
-      "endpoint": "GET main.download_database",
-      "response_time": 40.58953022956848,
-      "status_code": 200
-    }
-  ],
-  "alerts": [
-    {
-      "timestamp": "2025-09-17T17:55:37.239834",
-      "message": "Endpoint GET main.download_database is responding slowly (>5s)",
-      "severity": "warning"
-    }
-  ]
+  "slow_requests": [],
+  "alerts": []
 }

@@ -106,18 +106,19 @@
                 {% if mysql_dbs_local.success %}
                     <ul class="list-group list-group-flush">
                         {% for db_name in mysql_dbs_local.databases %}
-                            <li class="list-group-item d-flex align-items-center justify-content-center hover-bg-light" style="cursor: pointer;" onclick="showExportLog('{{ db_name }}')">
+                            <li class="list-group-item d-flex align-items-center hover-bg-light" style="cursor: pointer;" onclick="showExportLog('{{ db_name }}')">
                                 {% if db_name == 'db_almoxarifado' %}
-                                    <i class="bi bi-archive fs-4 text-warning" title="{{ db_name }}"></i>
+                                    <i class="bi bi-archive fs-4 text-warning me-2" title="{{ db_name }}"></i>
                                 {% elif 'crm' in db_name %}
-                                    <i class="bi bi-people fs-4 text-info" title="{{ db_name }}"></i>
+                                    <i class="bi bi-people fs-4 text-info me-2" title="{{ db_name }}"></i>
                                 {% elif 'frota' in db_name %}
-                                    <i class="bi bi-truck fs-4 text-secondary" title="{{ db_name }}"></i>
+                                    <i class="bi bi-truck fs-4 text-secondary me-2" title="{{ db_name }}"></i>
                                 {% elif 'patrimonio' in db_name %}
-                                    <i class="bi bi-building fs-4 text-dark" title="{{ db_name }}"></i>
+                                    <i class="bi bi-building fs-4 text-dark me-2" title="{{ db_name }}"></i>
                                 {% else %}
-                                    <i class="bi bi-database fs-4 text-primary" title="{{ db_name }}"></i>
+                                    <i class="bi bi-database fs-4 text-primary me-2" title="{{ db_name }}"></i>
                                 {% endif %}
+                                <span class="fs-6 fw-medium">{{ db_name }}</span>
                             </li>
                         {% endfor %}
                     </ul>
@@ -236,7 +237,7 @@
 </div>
 
 <script>
-function downloadDatabase(dbName, button = null) {
+function downloadDatabase(dbName, button = null, modal = null) {
     // Mostrar loading no botão
     const btn = button || event.target.closest('.download-btn');
     const originalText = btn.innerHTML;
@@ -252,6 +253,12 @@ function downloadDatabase(dbName, button = null) {
             return response.blob();
         })
         .then(blob => {
+            // Fechar modal assim que receber a resposta do backend
+            if (modal) {
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                bsModal.hide();
+            }
+
             // Criar link para download
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -259,6 +266,8 @@ function downloadDatabase(dbName, button = null) {
             a.href = url;
             a.download = `${dbName}_${new Date().toISOString().split('T')[0]}.sql`;
             document.body.appendChild(a);
+
+            // Iniciar download
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
@@ -272,6 +281,12 @@ function downloadDatabase(dbName, button = null) {
         })
         .catch(error => {
             console.error('Erro no download:', error);
+
+            // Fechar modal em caso de erro
+            if (modal) {
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                bsModal.hide();
+            }
 
             // Restaurar botão
             btn.innerHTML = originalText;
@@ -352,10 +367,9 @@ function startExportWithProgress(dbName, modal, downloadBtn) {
 
     // Simular processo de exportação com barra de progresso
     simulateExportProcessWithProgress(logContent, progressBar, dbName, startTime, () => {
-        // Após exportação completa, fechar modal e iniciar download
-        const bsModal = bootstrap.Modal.getInstance(modal);
-        bsModal.hide();
-        downloadDatabase(dbName, downloadBtn);
+        // Após exportação completa, iniciar download
+        addLogEntry(logContent, 'Iniciando download...', 'info');
+        downloadDatabase(dbName, downloadBtn, modal);
     });
 }
 

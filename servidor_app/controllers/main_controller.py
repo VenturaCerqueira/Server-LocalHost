@@ -208,6 +208,9 @@ def download_database(db_name):
         response.headers['Content-Type'] = 'application/sql'
         response.headers['Content-Disposition'] = f'attachment; filename={db_name}_{dump_result["timestamp"]}.sql'
 
+        # Set cookie to indicate download started
+        response.set_cookie('fileDownload', 'true', path='/')
+
         return response
 
     except Exception as e:
