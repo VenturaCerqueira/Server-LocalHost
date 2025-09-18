@@ -96,7 +96,7 @@
         <div class="card shadow-sm border-primary h-100">
             <div class="card-header bg-primary text-white py-3 d-flex justify-content-between align-items-center">
                 <h5 class="m-0 font-weight-bold">
-                    <i class="bi bi-house-door me-2"></i>Bancos de Dados MySQL Locais (XAMPP)
+                    <i class="bi bi-house-door me-2"></i>Bancos de Dados MySQL Locais
                 </h5>
                 {% if mysql_dbs_local.success %}
                     <span class="badge bg-light text-primary">{{ mysql_dbs_local.count }} bancos</span>
@@ -106,19 +106,33 @@
                 {% if mysql_dbs_local.success %}
                     <ul class="list-group list-group-flush">
                         {% for db_name in mysql_dbs_local.databases %}
-                            <li class="list-group-item d-flex align-items-center hover-bg-light" style="cursor: pointer;" onclick="showExportLog('{{ db_name }}')">
-                                {% if db_name == 'db_almoxarifado' %}
-                                    <i class="bi bi-archive fs-4 text-warning me-2" title="{{ db_name }}"></i>
-                                {% elif 'crm' in db_name %}
-                                    <i class="bi bi-people fs-4 text-info me-2" title="{{ db_name }}"></i>
-                                {% elif 'frota' in db_name %}
-                                    <i class="bi bi-truck fs-4 text-secondary me-2" title="{{ db_name }}"></i>
-                                {% elif 'patrimonio' in db_name %}
-                                    <i class="bi bi-building fs-4 text-dark me-2" title="{{ db_name }}"></i>
-                                {% else %}
-                                    <i class="bi bi-database fs-4 text-primary me-2" title="{{ db_name }}"></i>
-                                {% endif %}
-                                <span class="fs-6 fw-medium">{{ db_name }}</span>
+                            <li class="list-group-item d-flex align-items-center justify-content-between hover-bg-light">
+                                <div class="d-flex align-items-center">
+                                    {% if db_name == 'db_almoxarifado' %}
+                                        <i class="bi bi-archive fs-4 text-warning me-2" title="{{ db_name }}"></i>
+                                    {% elif 'crm' in db_name %}
+                                        <i class="bi bi-people fs-4 text-info me-2" title="{{ db_name }}"></i>
+                                    {% elif 'frota' in db_name %}
+                                        <i class="bi bi-truck fs-4 text-secondary me-2" title="{{ db_name }}"></i>
+                                    {% elif 'patrimonio' in db_name %}
+                                        <i class="bi bi-building fs-4 text-dark me-2" title="{{ db_name }}"></i>
+                                    {% else %}
+                                        <i class="bi bi-database fs-4 text-primary me-2" title="{{ db_name }}"></i>
+                                    {% endif %}
+                                    <span class="fs-6 fw-medium">{{ db_name }}</span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-info compare-btn"
+                                            onclick="compareDatabases('{{ db_name }}')"
+                                            title="Comparar banco local {{ db_name }} com produção">
+                                        <i class="bi bi-arrow-left-right"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary analyze-btn"
+                                            onclick="analyzeDatabase('{{ db_name }}')"
+                                            title="Analisar banco de dados {{ db_name }}">
+                                        <i class="bi bi-bar-chart-line"></i>
+                                    </button>
+                                </div>
                             </li>
                         {% endfor %}
                     </ul>
@@ -231,6 +245,40 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Comparação de Banco -->
+<div class="modal fade" id="compareModal" tabindex="-1" aria-labelledby="compareModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="compareModalLabel">
+                    <i class="bi bi-arrow-left-right me-2"></i>Comparação de Banco de Dados
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Progresso da Comparação</label>
+                    <div class="progress">
+                        <div class="progress-bar" id="compareProgress" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div id="compareLogContent" class="bg-dark text-light p-3 rounded" style="font-family: monospace; font-size: 0.875rem; max-height: 200px; overflow-y: auto;">
+                    <div class="text-center text-muted">
+                        <i class="bi bi-hourglass-split fs-4 mb-2"></i>
+                        <br>Iniciando comparação do banco de dados...
+                    </div>
+                </div>
+                <div id="compareResults" class="mt-3" style="display: none;">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
             </div>
         </div>
     </div>
@@ -634,6 +682,421 @@ function simulateAnalysisProcessWithProgress(logContent, progressBar, dbName, st
     }
 
     executeStep();
+}
+
+function compareDatabases(dbName) {
+    // Criar modal para mostrar o progresso da comparação
+    const modal = document.getElementById('compareModal');
+    const bsModal = new bootstrap.Modal(modal, {
+        backdrop: 'static',
+        keyboard: false
+    });
+    bsModal.show();
+
+    // Iniciar comparação com progresso
+    startComparisonWithProgress(dbName, modal);
+}
+
+function startComparisonWithProgress(dbName, modal) {
+    const logContent = modal.querySelector('#compareLogContent');
+    const progressBar = modal.querySelector('#compareProgress');
+    const resultsContainer = modal.querySelector('#compareResults');
+    const startTime = new Date();
+
+    // Limpar conteúdo anterior
+    logContent.innerHTML = '';
+    resultsContainer.style.display = 'none';
+    resultsContainer.innerHTML = '';
+
+    // Adicionar timestamp inicial
+    addLogEntry(logContent, `Iniciando comparação do banco ${dbName}...`, 'info');
+    addLogEntry(logContent, `Timestamp: ${startTime.toLocaleString()}`, 'info');
+    addLogEntry(logContent, '', 'info');
+
+    // Simular processo de comparação com barra de progresso
+    simulateComparisonProcessWithProgress(logContent, progressBar, dbName, startTime, () => {
+        // Após comparação completa, fazer requisição AJAX para obter resultados
+        addLogEntry(logContent, 'Obtendo resultados da comparação...', 'info');
+
+        fetch(`/databases/compare/${dbName}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    displayComparisonResults(resultsContainer, data.comparison, dbName);
+                    resultsContainer.style.display = 'block';
+                    addLogEntry(logContent, 'Comparação concluída com sucesso!', 'success');
+                } else {
+                    addLogEntry(logContent, `Erro: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erro na comparação:', error);
+                addLogEntry(logContent, `Erro na comparação: ${error.message}`, 'error');
+            });
+    });
+}
+
+function simulateComparisonProcessWithProgress(logContent, progressBar, dbName, startTime, onComplete) {
+    const steps = [
+        { message: 'Conectando aos bancos de dados local e produção...', delay: 500 },
+        { message: 'Verificando permissões e estrutura...', delay: 300 },
+        { message: 'Obtendo lista de tabelas...', delay: 600 },
+        { message: 'Comparando estruturas das tabelas...', delay: 1000 },
+        { message: 'Analisando diferenças de colunas...', delay: 1200 },
+        { message: 'Comparando dados das tabelas...', delay: 1500 },
+        { message: 'Gerando relatório de diferenças...', delay: 800 },
+        { message: 'Comparação concluída com sucesso!', delay: 200, type: 'success' }
+    ];
+
+    let currentStep = 0;
+
+    function executeStep() {
+        if (currentStep < steps.length) {
+            const step = steps[currentStep];
+            addLogEntry(logContent, step.message, step.type || 'info');
+
+            // Atualizar barra de progresso
+            const progress = ((currentStep + 1) / steps.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressBar.setAttribute('aria-valuenow', progress);
+
+            currentStep++;
+            setTimeout(executeStep, step.delay);
+        } else {
+            // Finalizar
+            const endTime = new Date();
+            const duration = (endTime - startTime) / 1000;
+            addLogEntry(logContent, '', 'info');
+            addLogEntry(logContent, `Tempo total: ${duration.toFixed(2)} segundos`, 'success');
+
+            // Chamar callback para obter resultados
+            setTimeout(onComplete, 500);
+        }
+    }
+
+    executeStep();
+}
+
+function displayComparisonResults(container, comparison, dbName) {
+    container.innerHTML = `
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-arrow-left-right me-2"></i>
+                    Resultados da Comparação: ${dbName}
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">
+                                    <i class="bi bi-table me-2"></i>
+                                    Tabelas Comuns
+                                </h5>
+                                <h2>${comparison.tables.common.length}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">
+                                    <i class="bi bi-plus-circle me-2"></i>
+                                    Apenas Local
+                                </h5>
+                                <h2>${comparison.tables.missing_in_prod.length}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">
+                                    <i class="bi bi-dash-circle me-2"></i>
+                                    Apenas Produção
+                                </h5>
+                                <h2>${comparison.tables.missing_in_local.length}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    Diferenças
+                                </h5>
+                                <h2>${Object.keys(comparison.columns).length + Object.keys(comparison.data).length}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tables Section -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">
+                                    <i class="bi bi-table me-2"></i>
+                                    Comparação de Tabelas
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <!-- Missing in Production -->
+                                    <div class="col-md-6">
+                                        <h6 class="text-success">
+                                            <i class="bi bi-plus-circle me-2"></i>
+                                            Tabelas presentes apenas no Local (${comparison.tables.missing_in_prod.length})
+                                        </h6>
+                                        ${comparison.tables.missing_in_prod.length > 0 ?
+                                            `<div class="table-responsive">
+                                                <table class="table table-sm table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Nome da Tabela</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        ${comparison.tables.missing_in_prod.map(table =>
+                                                            `<tr>
+                                                                <td>
+                                                                    <span class="badge bg-success">
+                                                                        <i class="bi bi-plus-circle me-1"></i>
+                                                                        ${table}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>`
+                                                        ).join('')}
+                                                    </tbody>
+                                                </table>
+                                            </div>` :
+                                            '<p class="text-muted">Nenhuma tabela exclusiva do ambiente local.</p>'
+                                        }
+                                    </div>
+
+                                    <!-- Missing in Local -->
+                                    <div class="col-md-6">
+                                        <h6 class="text-warning">
+                                            <i class="bi bi-dash-circle me-2"></i>
+                                            Tabelas presentes apenas na Produção (${comparison.tables.missing_in_local.length})
+                                        </h6>
+                                        ${comparison.tables.missing_in_local.length > 0 ?
+                                            `<div class="table-responsive">
+                                                <table class="table table-sm table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Nome da Tabela</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        ${comparison.tables.missing_in_local.map(table =>
+                                                            `<tr>
+                                                                <td>
+                                                                    <span class="badge bg-warning">
+                                                                        <i class="bi bi-dash-circle me-1"></i>
+                                                                        ${table}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>`
+                                                        ).join('')}
+                                                    </tbody>
+                                                </table>
+                                            </div>` :
+                                            '<p class="text-muted">Nenhuma tabela exclusiva do ambiente de produção.</p>'
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column Differences -->
+                ${Object.keys(comparison.columns).length > 0 ? `
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">
+                                    <i class="bi bi-columns me-2"></i>
+                                    Diferenças de Colunas (${Object.keys(comparison.columns).length} tabelas)
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                ${Object.entries(comparison.columns).map(([table, diffs]) => `
+                                    <div class="mb-4">
+                                        <h6 class="text-info">
+                                            <i class="bi bi-table me-2"></i>
+                                            Tabela: ${table}
+                                        </h6>
+                                        <div class="row">
+                                            <!-- Missing columns in production -->
+                                            ${diffs.missing_in_prod && diffs.missing_in_prod.length > 0 ? `
+                                            <div class="col-md-4">
+                                                <h7 class="text-success">Colunas apenas no Local</h7>
+                                                <ul class="list-group list-group-flush">
+                                                    ${diffs.missing_in_prod.map(col =>
+                                                        `<li class="list-group-item py-1">
+                                                            <span class="badge bg-success">
+                                                                <i class="bi bi-plus-circle me-1"></i>
+                                                                ${col}
+                                                            </span>
+                                                        </li>`
+                                                    ).join('')}
+                                                </ul>
+                                            </div>` : ''}
+                                            <!-- Missing columns in local -->
+                                            ${diffs.missing_in_local && diffs.missing_in_local.length > 0 ? `
+                                            <div class="col-md-4">
+                                                <h7 class="text-warning">Colunas apenas na Produção</h7>
+                                                <ul class="list-group list-group-flush">
+                                                    ${diffs.missing_in_local.map(col =>
+                                                        `<li class="list-group-item py-1">
+                                                            <span class="badge bg-warning">
+                                                                <i class="bi bi-dash-circle me-1"></i>
+                                                                ${col}
+                                                            </span>
+                                                        </li>`
+                                                    ).join('')}
+                                                </ul>
+                                            </div>` : ''}
+                                            <!-- Type differences -->
+                                            ${diffs.type_differences && Object.keys(diffs.type_differences).length > 0 ? `
+                                            <div class="col-md-4">
+                                                <h7 class="text-danger">Diferenças de Tipo</h7>
+                                                <ul class="list-group list-group-flush">
+                                                    ${Object.entries(diffs.type_differences).map(([col, types]) =>
+                                                        `<li class="list-group-item py-1">
+                                                            <strong>${col}:</strong><br>
+                                                            <small>
+                                                                <span class="text-success">Local: ${types.local}</span><br>
+                                                                <span class="text-warning">Prod: ${types.prod}</span>
+                                                            </small>
+                                                        </li>`
+                                                    ).join('')}
+                                                </ul>
+                                            </div>` : ''}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>` : ''}
+
+                <!-- Data Differences -->
+                ${Object.keys(comparison.data).length > 0 ? `
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">
+                                    <i class="bi bi-bar-chart-line me-2"></i>
+                                    Diferenças de Dados (${Object.keys(comparison.data).length} tabelas)
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Tabela</th>
+                                                <th>Registros Local</th>
+                                                <th>Registros Produção</th>
+                                                <th>Diferença</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${Object.entries(comparison.data).map(([table, data]) => `
+                                                <tr>
+                                                    <td>
+                                                        <strong>${table}</strong>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-primary">${data.local_count}</span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-secondary">${data.prod_count}</span>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        ${data.difference > 0 ?
+                                                            `<span class="badge bg-success">+${data.difference}</span>` :
+                                                            data.difference < 0 ?
+                                                            `<span class="badge bg-warning">${data.difference}</span>` :
+                                                            `<span class="badge bg-info">0</span>`
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        ${data.difference > 0 ?
+                                                            '<span class="text-success"><i class="bi bi-arrow-up-circle me-1"></i>Local tem mais registros</span>' :
+                                                            data.difference < 0 ?
+                                                            '<span class="text-warning"><i class="bi bi-arrow-down-circle me-1"></i>Produção tem mais registros</span>' :
+                                                            '<span class="text-info"><i class="bi bi-check-circle me-1"></i>Contagens iguais</span>'
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>` : ''}
+
+                <!-- Summary -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">
+                                    <i class="bi bi-clipboard-check me-2"></i>
+                                    Resumo da Comparação
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <h4 class="text-primary">${comparison.tables.common.length}</h4>
+                                        <p class="mb-0">Tabelas em comum</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h4 class="text-success">${comparison.tables.missing_in_prod.length}</h4>
+                                        <p class="mb-0">Tabelas apenas no local</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h4 class="text-warning">${comparison.tables.missing_in_local.length}</h4>
+                                        <p class="mb-0">Tabelas apenas na produção</p>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h4 class="text-info">${Object.keys(comparison.columns).length + Object.keys(comparison.data).length}</h4>
+                                        <p class="mb-0">Diferenças encontradas</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 </script>
 

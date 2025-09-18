@@ -18,7 +18,7 @@
 - Tamanho em Disco (aprox.): 0.03 MB
 - Collation: `utf8mb4_unicode_ci`
 - Data de Criação: 2025-07-15 19:58:34
-- Última Atualização: 2025-09-17 17:56:07
+- Última Atualização: 2025-09-18 19:14:16
 
 
 ---
@@ -285,11 +285,11 @@
 ## Tabela: `wp_itsec_logs`
 
 - Motor (Engine): `MyISAM`
-- Total de Linhas (aprox.): 13.688
+- Total de Linhas (aprox.): 13.690
 - Tamanho em Disco (aprox.): 127.81 MB
 - Collation: `utf8mb4_unicode_ci`
 - Data de Criação: 2025-07-15 19:59:13
-- Última Atualização: 2025-09-16 22:10:56
+- Última Atualização: 2025-09-18 15:03:42
 
 
 ---
@@ -320,11 +320,11 @@
 ## Tabela: `wp_itsec_temp`
 
 - Motor (Engine): `MyISAM`
-- Total de Linhas (aprox.): 17.200
+- Total de Linhas (aprox.): 17.202
 - Tamanho em Disco (aprox.): 1.84 MB
 - Collation: `utf8mb4_unicode_ci`
 - Data de Criação: 2025-07-15 20:01:15
-- Última Atualização: 2025-09-15 06:49:34
+- Última Atualização: 2025-09-18 15:03:42
 
 
 ---
@@ -355,11 +355,11 @@
 ## Tabela: `wp_options`
 
 - Motor (Engine): `MyISAM`
-- Total de Linhas (aprox.): 2.047
+- Total de Linhas (aprox.): 1.436
 - Tamanho em Disco (aprox.): 2.36 MB
 - Collation: `utf8mb4_unicode_ci`
 - Data de Criação: 2025-07-15 20:02:43
-- Última Atualização: 2025-09-17 12:20:46
+- Última Atualização: 2025-09-18 19:14:17
 
 
 ---
@@ -371,7 +371,7 @@
 - Tamanho em Disco (aprox.): 0.08 MB
 - Collation: `utf8mb4_unicode_ci`
 - Data de Criação: 2025-07-15 20:02:45
-- Última Atualização: 2025-09-16 19:09:35
+- Última Atualização: 2025-09-18 17:55:10
 
 
 ---

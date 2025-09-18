@@ -606,6 +606,31 @@ def dump_production_database(config, db_name: str) -> Dict[str, Any]:
 # Instância global será criada no app initialization
 db_optimizer = None
 
+def get_local_mysql_connection(config, database=None):
+    """
+    Retorna uma conexão pymysql para o banco MySQL local (XAMPP) usando as configurações do app
+    """
+    local_host = config.get('LOCAL_DB_HOST', 'localhost')
+    local_port = int(config.get('LOCAL_DB_PORT', 3306))
+    local_user = config.get('LOCAL_DB_USER', 'root')
+    local_password = config.get('LOCAL_DB_PASSWORD', '')
+
+    conn_params = dict(
+        host=local_host,
+        port=local_port,
+        user=local_user,
+        password=local_password,
+        cursorclass=pymysql.cursors.DictCursor,
+        connect_timeout=int(config.get('MYSQL_CONNECT_TIMEOUT', 15)),
+        read_timeout=int(config.get('MYSQL_READ_TIMEOUT', 300)),
+        write_timeout=int(config.get('MYSQL_WRITE_TIMEOUT', 300))
+    )
+    if database:
+        conn_params['database'] = database
+
+    connection = pymysql.connect(**conn_params)
+    return connection
+
 def get_production_mysql_connection(config, database=None):
     """
     Retorna uma conexão pymysql para o banco de produção usando as configurações do app

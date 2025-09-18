@@ -217,6 +217,334 @@ def download_database(db_name):
         current_app.logger.error(f"Error downloading database {db_name}: {str(e)}")
         return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
 
+@main_bp.route('/databases/compare/<db_name>')
+@login_required
+@require_access(AREAS['banco_dados'])
+def compare_database(db_name):
+    import os
+    import pymysql
+    import time
+    import traceback
+    import json
+    import html
+    from flask import render_template, current_app, request
+
+    # Check if this is an AJAX request
+    if request.headers.get('Content-Type') == 'application/json' or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # Return JSON response for AJAX requests
+        return compare_database_json(db_name)
+
+    # Load environment variables from app config
+    config = current_app.config
+
+    # Connect to both local and production databases and compare
+    local_connection = None
+    prod_connection = None
+    comparison_results = {}
+    error_message = None
+
+    try:
+        # Connect to local MySQL database
+        from servidor_app.services.database_service import get_local_mysql_connection
+        local_connection = get_local_mysql_connection(config, db_name)
+
+        # Connect to production MySQL database
+        from servidor_app.services.database_service import get_production_mysql_connection
+        prod_connection = get_production_mysql_connection(config, db_name)
+
+        # Get tables from both databases
+        with local_connection.cursor() as cursor:
+            cursor.execute("SHOW TABLES")
+            local_tables = [row[f'Tables_in_{db_name}'] for row in cursor.fetchall()]
+
+        with prod_connection.cursor() as cursor:
+            cursor.execute("SHOW TABLES")
+            prod_tables = [row[f'Tables_in_{db_name}'] for row in cursor.fetchall()]
+
+        # Compare tables
+        missing_in_prod = [table for table in local_tables if table not in prod_tables]
+        missing_in_local = [table for table in prod_tables if table not in local_tables]
+        common_tables = [table for table in local_tables if table in prod_tables]
+
+        comparison_results['tables'] = {
+            'missing_in_prod': missing_in_prod,
+            'missing_in_local': missing_in_local,
+            'common': common_tables
+        }
+
+        # Compare columns for common tables
+        column_differences = {}
+        data_differences = {}
+
+        for table in common_tables:
+            # Get columns from local
+            with local_connection.cursor() as cursor:
+                cursor.execute(f"DESCRIBE {table}")
+                local_columns = cursor.fetchall()
+
+            # Get columns from production
+            with prod_connection.cursor() as cursor:
+                cursor.execute(f"DESCRIBE {table}")
+                prod_columns = cursor.fetchall()
+
+            # Compare columns
+            local_col_names = [col['Field'] for col in local_columns]
+            prod_col_names = [col['Field'] for col in prod_columns]
+
+            missing_cols_in_prod = [col for col in local_col_names if col not in prod_col_names]
+            missing_cols_in_local = [col for col in prod_col_names if col not in local_col_names]
+
+            # Check for type differences in common columns
+            type_differences = {}
+            for col_name in set(local_col_names) & set(prod_col_names):
+                local_col = next(col for col in local_columns if col['Field'] == col_name)
+                prod_col = next(col for col in prod_columns if col['Field'] == col_name)
+
+                if local_col['Type'] != prod_col['Type']:
+                    type_differences[col_name] = {
+                        'local': local_col['Type'],
+                        'prod': prod_col['Type']
+                    }
+
+            if missing_cols_in_prod or missing_cols_in_local or type_differences:
+                column_differences[table] = {
+                    'missing_in_prod': missing_cols_in_prod,
+                    'missing_in_local': missing_cols_in_local,
+                    'type_differences': type_differences
+                }
+
+            # Compare row counts (simple data comparison)
+            with local_connection.cursor() as cursor:
+                cursor.execute(f"SELECT COUNT(*) as count FROM {table}")
+                local_count = cursor.fetchone()['count']
+
+            with prod_connection.cursor() as cursor:
+                cursor.execute(f"SELECT COUNT(*) as count FROM {table}")
+                prod_count = cursor.fetchone()['count']
+
+            if local_count != prod_count:
+                data_differences[table] = {
+                    'local_count': local_count,
+                    'prod_count': prod_count,
+                    'difference': local_count - prod_count
+                }
+
+        comparison_results['columns'] = column_differences
+        comparison_results['data'] = data_differences
+
+        return render_template('database_comparison.html',
+                             db_name=db_name,
+                             comparison=comparison_results,
+                             error=None)
+
+    except Exception as e:
+        error_message = f"Erro ao comparar bancos de dados: {str(e)}"
+        current_app.logger.error(error_message)
+        current_app.logger.error(traceback.format_exc())
+        return render_template('database_comparison.html', error=error_message, db_name=db_name)
+    finally:
+        if local_connection and local_connection.open:
+            local_connection.close()
+        if prod_connection and prod_connection.open:
+            prod_connection.close()
+
+def compare_database_json(db_name):
+    """Return JSON response for database comparison (used by AJAX requests)"""
+    import os
+    import pymysql
+    import time
+    import traceback
+    import json
+    import html
+    from flask import current_app, jsonify
+
+    # Load environment variables from app config
+    config = current_app.config
+
+    # Connect to both local and production databases and compare
+    local_connection = None
+    prod_connection = None
+
+    try:
+        # Connect to local MySQL database
+        from servidor_app.services.database_service import get_local_mysql_connection
+        local_connection = get_local_mysql_connection(config, db_name)
+
+        # Connect to production MySQL database
+        from servidor_app.services.database_service import get_production_mysql_connection
+        prod_connection = get_production_mysql_connection(config, db_name)
+
+        # Get tables from both databases
+        with local_connection.cursor() as cursor:
+            cursor.execute("SHOW TABLES")
+            local_tables = [row[f'Tables_in_{db_name}'] for row in cursor.fetchall()]
+
+        with prod_connection.cursor() as cursor:
+            cursor.execute("SHOW TABLES")
+            prod_tables = [row[f'Tables_in_{db_name}'] for row in cursor.fetchall()]
+
+        # Compare tables
+        missing_in_prod = [table for table in local_tables if table not in prod_tables]
+        missing_in_local = [table for table in prod_tables if table not in local_tables]
+        common_tables = [table for table in local_tables if table in prod_tables]
+
+        # Prepare tables array for frontend
+        tables_comparison = []
+
+        # Add missing tables in production
+        for table in missing_in_prod:
+            tables_comparison.append({
+                'name': table,
+                'status': 'missing',
+                'details': 'Tabela existe apenas no banco local'
+            })
+
+        # Add missing tables in local
+        for table in missing_in_local:
+            tables_comparison.append({
+                'name': table,
+                'status': 'missing',
+                'details': 'Tabela existe apenas no banco de produção'
+            })
+
+        # Add common tables (initially marked as matching)
+        for table in common_tables:
+            tables_comparison.append({
+                'name': table,
+                'status': 'matching',
+                'details': 'Tabela existe em ambos os bancos'
+            })
+
+        # Prepare columns and data arrays
+        columns_comparison = []
+        data_comparison = []
+
+        # Compare columns for common tables
+        for table in common_tables:
+            # Get columns from local
+            with local_connection.cursor() as cursor:
+                cursor.execute(f"DESCRIBE {table}")
+                local_columns = cursor.fetchall()
+
+            # Get columns from production
+            with prod_connection.cursor() as cursor:
+                cursor.execute(f"DESCRIBE {table}")
+                prod_columns = cursor.fetchall()
+
+            # Compare columns
+            local_col_names = [col['Field'] for col in local_columns]
+            prod_col_names = [col['Field'] for col in prod_columns]
+
+            missing_cols_in_prod = [col for col in local_col_names if col not in prod_col_names]
+            missing_cols_in_local = [col for col in prod_col_names if col not in local_col_names]
+
+            # Check for type differences in common columns
+            type_differences = {}
+            for col_name in set(local_col_names) & set(prod_col_names):
+                local_col = next(col for col in local_columns if col['Field'] == col_name)
+                prod_col = next(col for col in prod_columns if col['Field'] == col_name)
+
+                if local_col['Type'] != prod_col['Type']:
+                    type_differences[col_name] = {
+                        'local': local_col['Type'],
+                        'prod': prod_col['Type']
+                    }
+
+            # Add column differences
+            for col in missing_cols_in_prod:
+                columns_comparison.append({
+                    'table': table,
+                    'name': col,
+                    'status': 'missing',
+                    'details': 'Coluna existe apenas no banco local'
+                })
+
+            for col in missing_cols_in_local:
+                columns_comparison.append({
+                    'table': table,
+                    'name': col,
+                    'status': 'missing',
+                    'details': 'Coluna existe apenas no banco de produção'
+                })
+
+            for col_name, types in type_differences.items():
+                columns_comparison.append({
+                    'table': table,
+                    'name': col_name,
+                    'status': 'different',
+                    'details': f'Tipo diferente: Local={types["local"]}, Produção={types["prod"]}'
+                })
+
+            # If there are column differences, mark table as different
+            if missing_cols_in_prod or missing_cols_in_local or type_differences:
+                # Update table status
+                for t in tables_comparison:
+                    if t['name'] == table:
+                        t['status'] = 'different'
+                        t['details'] = 'Diferenças encontradas nas colunas'
+                        break
+
+            # Compare row counts (simple data comparison)
+            with local_connection.cursor() as cursor:
+                cursor.execute(f"SELECT COUNT(*) as count FROM {table}")
+                local_count = cursor.fetchone()['count']
+
+            with prod_connection.cursor() as cursor:
+                cursor.execute(f"SELECT COUNT(*) as count FROM {table}")
+                prod_count = cursor.fetchone()['count']
+
+            if local_count != prod_count:
+                data_comparison.append({
+                    'table': table,
+                    'local_count': local_count,
+                    'production_count': prod_count,
+                    'differences': abs(local_count - prod_count)
+                })
+
+                # Mark table as different if data differs
+                for t in tables_comparison:
+                    if t['name'] == table:
+                        t['status'] = 'different'
+                        t['details'] = 'Diferenças encontradas nos dados'
+                        break
+
+        # Calculate statistics
+        total_tables = len(tables_comparison)
+        matching_tables = len([t for t in tables_comparison if t['status'] == 'matching'])
+        different_tables = len([t for t in tables_comparison if t['status'] == 'different'])
+        missing_tables = len([t for t in tables_comparison if t['status'] == 'missing'])
+
+        comparison_results = {
+            'stats': {
+                'tables_total': total_tables,
+                'tables_matching': matching_tables,
+                'tables_different': different_tables,
+                'tables_missing': missing_tables
+            },
+            'tables': tables_comparison,
+            'columns': columns_comparison,
+            'data': data_comparison
+        }
+
+        return jsonify({
+            'success': True,
+            'comparison': comparison_results
+        })
+
+    except Exception as e:
+        error_message = f"Erro ao comparar bancos de dados: {str(e)}"
+        current_app.logger.error(error_message)
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({
+            'success': False,
+            'error': error_message
+        }), 500
+    finally:
+        if local_connection and local_connection.open:
+            local_connection.close()
+        if prod_connection and prod_connection.open:
+            prod_connection.close()
+
 @main_bp.route('/databases/analyze/<db_name>')
 @login_required
 @require_access(AREAS['banco_dados'])

@@ -205,7 +205,7 @@
 <title>wp_itsec_logs</title>
 <polygon fill="none" stroke="black" points="4051.12,-57.5 3957.88,-57.5 3957.88,0 4051.12,0 4051.12,-57.5"/>
 <text text-anchor="middle" x="4004.5" y="-40.2" font-family="Times New Roman,serif" font-size="14.00">wp_itsec_logs</text>
-<text text-anchor="middle" x="4004.5" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">13.688 rows</text>
+<text text-anchor="middle" x="4004.5" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">13.690 rows</text>
 <text text-anchor="middle" x="4004.5" y="-7.2" font-family="Times New Roman,serif" font-size="14.00">127.81 MB</text>
 </g>
 <!-- wp_itsec_mutexes -->
@@ -229,7 +229,7 @@
 <title>wp_itsec_temp</title>
 <polygon fill="none" stroke="black" points="4471.75,-57.5 4373.25,-57.5 4373.25,0 4471.75,0 4471.75,-57.5"/>
 <text text-anchor="middle" x="4422.5" y="-40.2" font-family="Times New Roman,serif" font-size="14.00">wp_itsec_temp</text>
-<text text-anchor="middle" x="4422.5" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">17.200 rows</text>
+<text text-anchor="middle" x="4422.5" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">17.202 rows</text>
 <text text-anchor="middle" x="4422.5" y="-7.2" font-family="Times New Roman,serif" font-size="14.00">1.84 MB</text>
 </g>
 <!-- wp_itsec_user_groups -->
@@ -253,7 +253,7 @@
 <title>wp_options</title>
 <polygon fill="none" stroke="black" points="4807,-57.5 4728,-57.5 4728,0 4807,0 4807,-57.5"/>
 <text text-anchor="middle" x="4767.5" y="-40.2" font-family="Times New Roman,serif" font-size="14.00">wp_options</text>
-<text text-anchor="middle" x="4767.5" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">2.047 rows</text>
+<text text-anchor="middle" x="4767.5" y="-23.7" font-family="Times New Roman,serif" font-size="14.00">1.436 rows</text>
 <text text-anchor="middle" x="4767.5" y="-7.2" font-family="Times New Roman,serif" font-size="14.00">2.36 MB</text>
 </g>
 <!-- wp_postmeta -->

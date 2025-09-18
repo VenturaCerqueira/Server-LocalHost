@@ -792,3 +792,413 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+
+// Database analysis functions
+function analyzeDatabase(dbName) {
+    // Criar modal para mostrar o progresso da análise
+    const modal = document.getElementById('analyzeModal');
+    const bsModal = new bootstrap.Modal(modal, {
+        backdrop: 'static',
+        keyboard: false
+    });
+    bsModal.show();
+
+    // Iniciar análise com progresso
+    startAnalysisWithProgress(dbName, modal);
+}
+
+function startAnalysisWithProgress(dbName, modal) {
+    const logContent = modal.querySelector('#analyzeLogContent');
+    const progressBar = modal.querySelector('#analyzeProgress');
+    const startTime = new Date();
+
+    // Limpar conteúdo anterior
+    logContent.innerHTML = '';
+
+    // Adicionar timestamp inicial
+    addLogEntry(logContent, `Iniciando análise do banco ${dbName}...`, 'info');
+    addLogEntry(logContent, `Timestamp: ${startTime.toLocaleString()}`, 'info');
+    addLogEntry(logContent, '', 'info');
+
+    // Simular processo de análise com barra de progresso
+    simulateAnalysisProcessWithProgress(logContent, progressBar, dbName, startTime, () => {
+        // Após análise completa, fechar modal e redirecionar
+        const bsModal = bootstrap.Modal.getInstance(modal);
+        bsModal.hide();
+        window.location.href = `/databases/analyze/${dbName}`;
+    });
+}
+
+function simulateAnalysisProcessWithProgress(logContent, progressBar, dbName, startTime, onComplete) {
+    const steps = [
+        { message: 'Conectando ao banco de dados...', delay: 500 },
+        { message: 'Verificando permissões e estrutura...', delay: 300 },
+        { message: 'Coletando metadados das tabelas...', delay: 800 },
+        { message: 'Analisando colunas e relacionamentos...', delay: 1000 },
+        { message: 'Gerando diagrama ERD...', delay: 1500 },
+        { message: 'Gerando diagrama de fluxo de dados...', delay: 1200 },
+        { message: 'Criando documentação em Markdown...', delay: 600 },
+        { message: 'Salvando diagramas e arquivos...', delay: 400 },
+        { message: 'Análise concluída com sucesso!', delay: 200, type: 'success' }
+    ];
+
+    let currentStep = 0;
+
+    function executeStep() {
+        if (currentStep < steps.length) {
+            const step = steps[currentStep];
+            addLogEntry(logContent, step.message, step.type || 'info');
+
+            // Atualizar barra de progresso
+            const progress = ((currentStep + 1) / steps.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressBar.setAttribute('aria-valuenow', progress);
+
+            currentStep++;
+            setTimeout(executeStep, step.delay);
+        } else {
+            // Finalizar
+            const endTime = new Date();
+            const duration = (endTime - startTime) / 1000;
+            addLogEntry(logContent, '', 'info');
+            addLogEntry(logContent, `Tempo total: ${duration.toFixed(2)} segundos`, 'success');
+            addLogEntry(logContent, `Redirecionando para página de análise...`, 'success');
+
+            // Chamar callback para redirecionamento
+            setTimeout(onComplete, 500);
+        }
+    }
+
+    executeStep();
+}
+
+function analyzeLocalDatabase(dbName) {
+    // Criar modal para mostrar o progresso da análise
+    const modal = document.getElementById('analyzeModal');
+    const bsModal = new bootstrap.Modal(modal, {
+        backdrop: 'static',
+        keyboard: false
+    });
+    bsModal.show();
+
+    // Iniciar análise com progresso
+    startAnalysisWithProgress(dbName, modal);
+}
+
+function startComparisonWithProgress(dbName, modal) {
+    const logContent = modal.querySelector('#compareLogContent');
+    const progressBar = modal.querySelector('#compareProgress');
+    const resultsContainer = modal.querySelector('#compareResults');
+    const startTime = new Date();
+
+    // Limpar conteúdo anterior
+    if (logContent) logContent.innerHTML = '';
+    if (resultsContainer) resultsContainer.style.display = 'none';
+
+    // Adicionar timestamp inicial
+    if (logContent) {
+        addLogEntry(logContent, `Iniciando comparação do banco ${dbName}...`, 'info');
+        addLogEntry(logContent, `Timestamp: ${startTime.toLocaleString()}`, 'info');
+        addLogEntry(logContent, '', 'info');
+    }
+
+    // Simular processo de comparação com barra de progresso
+    simulateComparisonProcessWithProgress(logContent, progressBar, dbName, startTime, () => {
+        // Após comparação completa, fazer requisição AJAX para obter resultados
+        if (logContent) addLogEntry(logContent, 'Obtendo resultados da comparação...', 'info');
+
+        fetch(`/databases/compare/${dbName}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    if (resultsContainer) {
+                        displayComparisonResults(resultsContainer, data.comparison, dbName);
+                        resultsContainer.style.display = 'block';
+                    }
+                    if (logContent) addLogEntry(logContent, 'Comparação concluída com sucesso!', 'success');
+                } else {
+                    if (logContent) addLogEntry(logContent, `Erro: ${data.error}`, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Erro na comparação:', error);
+                if (logContent) addLogEntry(logContent, `Erro na comparação: ${error.message}`, 'error');
+            });
+    });
+}
+
+function compareDatabase(dbName) {
+    // Criar modal para mostrar o progresso da comparação
+    const modal = document.getElementById('compareModal');
+    const bsModal = new bootstrap.Modal(modal, {
+        backdrop: 'static',
+        keyboard: false
+    });
+    bsModal.show();
+
+    // Iniciar comparação com progresso
+    startComparisonWithProgress(dbName, modal);
+}
+
+function simulateComparisonProcessWithProgress(logContent, progressBar, dbName, startTime, onComplete) {
+    const steps = [
+        { message: 'Conectando ao banco de dados local...', delay: 500 },
+        { message: 'Conectando ao banco de dados de produção...', delay: 500 },
+        { message: 'Obtendo lista de tabelas...', delay: 400 },
+        { message: 'Comparando tabelas...', delay: 800 },
+        { message: 'Comparando colunas...', delay: 1000 },
+        { message: 'Comparando dados...', delay: 1200 },
+        { message: 'Gerando relatório de comparação...', delay: 600 },
+        { message: 'Finalizando...', delay: 400 },
+        { message: 'Comparação concluída com sucesso!', delay: 200, type: 'success' }
+    ];
+
+    let currentStep = 0;
+
+    function executeStep() {
+        if (currentStep < steps.length) {
+            const step = steps[currentStep];
+            addLogEntry(logContent, step.message, step.type || 'info');
+
+            // Atualizar barra de progresso
+            const progress = ((currentStep + 1) / steps.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressBar.setAttribute('aria-valuenow', progress);
+
+            currentStep++;
+            setTimeout(executeStep, step.delay);
+        } else {
+            // Finalizar
+            const endTime = new Date();
+            const duration = (endTime - startTime) / 1000;
+            addLogEntry(logContent, '', 'info');
+            addLogEntry(logContent, `Tempo total: ${duration.toFixed(2)} segundos`, 'success');
+            addLogEntry(logContent, `Redirecionando para página de comparação...`, 'success');
+
+            // Chamar callback para redirecionamento
+            setTimeout(onComplete, 500);
+        }
+    }
+
+    executeStep();
+}
+
+function displayComparisonResults(container, comparisonData, dbName) {
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="comparison-results">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h5 class="text-center mb-4">
+                        <i class="bi bi-arrow-left-right me-2"></i>
+                        Comparação do Banco: ${dbName}
+                    </h5>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-title text-primary">
+                                <i class="bi bi-table me-1"></i>Tabelas
+                            </h6>
+                            <h4 class="mb-0">${comparisonData.stats?.tables_total || 0}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-title text-success">
+                                <i class="bi bi-check-circle me-1"></i>Iguais
+                            </h6>
+                            <h4 class="mb-0">${comparisonData.stats?.tables_matching || 0}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-title text-warning">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Diferentes
+                            </h6>
+                            <h4 class="mb-0">${comparisonData.stats?.tables_different || 0}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h6 class="card-title text-danger">
+                                <i class="bi bi-x-circle me-1"></i>Faltando
+                            </h6>
+                            <h4 class="mb-0">${comparisonData.stats?.tables_missing || 0}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tables Comparison -->
+            ${comparisonData.tables ? `
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="mb-3">
+                            <i class="bi bi-table me-2"></i>Diferenças nas Tabelas
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Tabela</th>
+                                        <th>Status</th>
+                                        <th>Detalhes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${comparisonData.tables.map(table => `
+                                        <tr class="${table.status === 'missing' ? 'table-danger' : table.status === 'different' ? 'table-warning' : 'table-success'}">
+                                            <td><strong>${table.name}</strong></td>
+                                            <td>
+                                                ${table.status === 'missing' ?
+                                                    '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Faltando</span>' :
+                                                    table.status === 'different' ?
+                                                    '<span class="badge bg-warning"><i class="bi bi-exclamation-triangle me-1"></i>Diferente</span>' :
+                                                    '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Igual</span>'}
+                                            </td>
+                                            <td>
+                                                ${table.details ? table.details : 'Nenhuma diferença encontrada'}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+
+            <!-- Columns Comparison -->
+            ${comparisonData.columns ? `
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h6 class="mb-3">
+                            <i class="bi bi-columns me-2"></i>Diferenças nas Colunas
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Tabela</th>
+                                        <th>Coluna</th>
+                                        <th>Status</th>
+                                        <th>Detalhes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${comparisonData.columns.map(col => `
+                                        <tr class="${col.status === 'missing' ? 'table-danger' : col.status === 'different' ? 'table-warning' : 'table-success'}">
+                                            <td>${col.table}</td>
+                                            <td><strong>${col.name}</strong></td>
+                                            <td>
+                                                ${col.status === 'missing' ?
+                                                    '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Faltando</span>' :
+                                                    col.status === 'different' ?
+                                                    '<span class="badge bg-warning"><i class="bi bi-exclamation-triangle me-1"></i>Diferente</span>' :
+                                                    '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Igual</span>'}
+                                            </td>
+                                            <td>
+                                                ${col.details ? col.details : 'Nenhuma diferença encontrada'}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+
+            <!-- Data Comparison -->
+            ${comparisonData.data ? `
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h6 class="mb-3">
+                            <i class="bi bi-database me-2"></i>Diferenças nos Dados
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Tabela</th>
+                                        <th>Status</th>
+                                        <th>Registros Locais</th>
+                                        <th>Registros Produção</th>
+                                        <th>Diferenças</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${comparisonData.data.map(data => `
+                                        <tr class="${data.differences > 0 ? 'table-warning' : 'table-success'}">
+                                            <td><strong>${data.table}</strong></td>
+                                            <td>
+                                                ${data.differences > 0 ?
+                                                    '<span class="badge bg-warning"><i class="bi bi-exclamation-triangle me-1"></i>Diferente</span>' :
+                                                    '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Igual</span>'}
+                                            </td>
+                                            <td>${data.local_count}</td>
+                                            <td>${data.production_count}</td>
+                                            <td>
+                                                ${data.differences > 0 ?
+                                                    `<span class="text-danger">${data.differences} diferenças</span>` :
+                                                    'Nenhuma diferença'}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+function addLogEntry(container, message, type = 'info') {
+    const timestamp = new Date().toLocaleTimeString();
+    const logEntry = document.createElement('div');
+    logEntry.className = `log-entry log-${type}`;
+
+    let icon = '';
+    switch(type) {
+        case 'success':
+            icon = '<i class="bi bi-check-circle text-success me-1"></i>';
+            break;
+        case 'error':
+            icon = '<i class="bi bi-x-circle text-danger me-1"></i>';
+            break;
+        case 'warning':
+            icon = '<i class="bi bi-exclamation-triangle text-warning me-1"></i>';
+            break;
+        default:
+            icon = '<i class="bi bi-info-circle text-info me-1"></i>';
+    }
+
+    logEntry.innerHTML = `<span class="text-muted">[${timestamp}]</span> ${icon}${message}`;
+    container.appendChild(logEntry);
+    container.scrollTop = container.scrollHeight;
+}
