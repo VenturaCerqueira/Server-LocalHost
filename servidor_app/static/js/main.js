@@ -997,185 +997,716 @@ function simulateComparisonProcessWithProgress(logContent, progressBar, dbName, 
 function displayComparisonResults(container, comparisonData, dbName) {
     if (!container) return;
 
+    const hasDifferences = (comparisonData.tables && comparisonData.tables.some(t => t.status !== 'matching')) ||
+                          (comparisonData.columns && comparisonData.columns.length > 0) ||
+                          (comparisonData.data && comparisonData.data.some(d => d.differences > 0));
+
     container.innerHTML = `
         <div class="comparison-results">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h5 class="text-center mb-4">
-                        <i class="bi bi-arrow-left-right me-2"></i>
-                        Comparação do Banco: ${dbName}
-                    </h5>
-                </div>
-            </div>
-
-            <!-- Statistics Cards -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h6 class="card-title text-primary">
-                                <i class="bi bi-table me-1"></i>Tabelas
-                            </h6>
-                            <h4 class="mb-0">${comparisonData.stats?.tables_total || 0}</h4>
-                        </div>
+            <!-- Header with gradient background -->
+            <div class="comparison-header mb-4">
+                <div class="header-content">
+                    <div class="header-icon">
+                        <i class="bi bi-arrow-left-right"></i>
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h6 class="card-title text-success">
-                                <i class="bi bi-check-circle me-1"></i>Iguais
-                            </h6>
-                            <h4 class="mb-0">${comparisonData.stats?.tables_matching || 0}</h4>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h6 class="card-title text-warning">
-                                <i class="bi bi-exclamation-triangle me-1"></i>Diferentes
-                            </h6>
-                            <h4 class="mb-0">${comparisonData.stats?.tables_different || 0}</h4>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h6 class="card-title text-danger">
-                                <i class="bi bi-x-circle me-1"></i>Faltando
-                            </h6>
-                            <h4 class="mb-0">${comparisonData.stats?.tables_missing || 0}</h4>
-                        </div>
+                    <div class="header-text">
+                        <h4 class="mb-1">Comparação de Banco de Dados</h4>
+                        <p class="mb-0 text-muted">${dbName}</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Tables Comparison -->
-            ${comparisonData.tables ? `
-                <div class="row">
-                    <div class="col-12">
-                        <h6 class="mb-3">
-                            <i class="bi bi-table me-2"></i>Diferenças nas Tabelas
-                        </h6>
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Tabela</th>
-                                        <th>Status</th>
-                                        <th>Detalhes</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${comparisonData.tables.map(table => `
-                                        <tr class="${table.status === 'missing' ? 'table-danger' : table.status === 'different' ? 'table-warning' : 'table-success'}">
-                                            <td><strong>${table.name}</strong></td>
-                                            <td>
-                                                ${table.status === 'missing' ?
-                                                    '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Faltando</span>' :
-                                                    table.status === 'different' ?
-                                                    '<span class="badge bg-warning"><i class="bi bi-exclamation-triangle me-1"></i>Diferente</span>' :
-                                                    '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Igual</span>'}
-                                            </td>
-                                            <td>
-                                                ${table.details ? table.details : 'Nenhuma diferença encontrada'}
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            ` : ''}
+            <!-- Enhanced Nav tabs -->
+            <ul class="nav nav-tabs custom-tabs mb-4" id="comparisonTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">
+                        <i class="bi bi-bar-chart-line me-2"></i>
+                        <span class="tab-text">Visão Geral</span>
+                    </button>
+                </li>
+                ${hasDifferences ? `
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="differences-tab" data-bs-toggle="tab" data-bs-target="#differences" type="button" role="tab" aria-controls="differences" aria-selected="false">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <span class="tab-text">Diferenças</span>
+                        <span class="badge bg-danger ms-2">${getDifferencesCount(comparisonData)}</span>
+                    </button>
+                </li>
+                ` : ''}
+            </ul>
 
-            <!-- Columns Comparison -->
-            ${comparisonData.columns ? `
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <h6 class="mb-3">
-                            <i class="bi bi-columns me-2"></i>Diferenças nas Colunas
-                        </h6>
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Tabela</th>
-                                        <th>Coluna</th>
-                                        <th>Status</th>
-                                        <th>Detalhes</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${comparisonData.columns.map(col => `
-                                        <tr class="${col.status === 'missing' ? 'table-danger' : col.status === 'different' ? 'table-warning' : 'table-success'}">
-                                            <td>${col.table}</td>
-                                            <td><strong>${col.name}</strong></td>
-                                            <td>
-                                                ${col.status === 'missing' ?
-                                                    '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Faltando</span>' :
-                                                    col.status === 'different' ?
-                                                    '<span class="badge bg-warning"><i class="bi bi-exclamation-triangle me-1"></i>Diferente</span>' :
-                                                    '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Igual</span>'}
-                                            </td>
-                                            <td>
-                                                ${col.details ? col.details : 'Nenhuma diferença encontrada'}
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+            <!-- Tab panes -->
+            <div class="tab-content" id="comparisonTabContent">
+                <!-- Overview Tab -->
+                <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                    <!-- Enhanced Statistics Cards -->
+                    <div class="stats-grid mb-4">
+                        <div class="stat-card total">
+                            <div class="stat-icon">
+                                <i class="bi bi-table"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number">${comparisonData.stats?.tables_total || 0}</div>
+                                <div class="stat-label">Total de Tabelas</div>
+                            </div>
+                        </div>
+                        <div class="stat-card matching">
+                            <div class="stat-icon">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number">${comparisonData.stats?.tables_matching || 0}</div>
+                                <div class="stat-label">Tabelas Iguais</div>
+                            </div>
+                        </div>
+                        <div class="stat-card different">
+                            <div class="stat-icon">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number">${comparisonData.stats?.tables_different || 0}</div>
+                                <div class="stat-label">Tabelas Diferentes</div>
+                            </div>
+                        </div>
+                        <div class="stat-card missing">
+                            <div class="stat-icon">
+                                <i class="bi bi-x-circle-fill"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number">${comparisonData.stats?.tables_missing || 0}</div>
+                                <div class="stat-label">Tabelas Faltando</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            ` : ''}
 
-            <!-- Data Comparison -->
-            ${comparisonData.data ? `
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <h6 class="mb-3">
-                            <i class="bi bi-database me-2"></i>Diferenças nos Dados
-                        </h6>
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Tabela</th>
-                                        <th>Status</th>
-                                        <th>Registros Locais</th>
-                                        <th>Registros Produção</th>
-                                        <th>Diferenças</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${comparisonData.data.map(data => `
-                                        <tr class="${data.differences > 0 ? 'table-warning' : 'table-success'}">
-                                            <td><strong>${data.table}</strong></td>
-                                            <td>
-                                                ${data.differences > 0 ?
-                                                    '<span class="badge bg-warning"><i class="bi bi-exclamation-triangle me-1"></i>Diferente</span>' :
-                                                    '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Igual</span>'}
-                                            </td>
-                                            <td>${data.local_count}</td>
-                                            <td>${data.production_count}</td>
-                                            <td>
-                                                ${data.differences > 0 ?
-                                                    `<span class="text-danger">${data.differences} diferenças</span>` :
-                                                    'Nenhuma diferença'}
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
+                    ${!hasDifferences ? `
+                    <div class="success-state">
+                        <div class="success-icon">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <h4 class="success-title">Bancos de dados idênticos!</h4>
+                        <p class="success-message">Não foram encontradas diferenças entre os bancos local e de produção.</p>
+                        <div class="success-decoration">
+                            <i class="bi bi-stars"></i>
                         </div>
                     </div>
+                    ` : `
+                    <div class="differences-alert">
+                        <div class="alert-icon">
+                            <i class="bi bi-info-circle-fill"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h6>Foram encontradas diferenças</h6>
+                            <p class="mb-0">Clique na aba "Diferenças" para ver os detalhes completos.</p>
+                        </div>
+                    </div>
+                    `}
                 </div>
-            ` : ''}
+
+                <!-- Differences Tab -->
+                ${hasDifferences ? `
+                <div class="tab-pane fade" id="differences" role="tabpanel" aria-labelledby="differences-tab">
+                    <!-- Tables Comparison -->
+                    ${comparisonData.tables && comparisonData.tables.some(t => t.status !== 'matching') ? `
+                        <div class="difference-section mb-4">
+                            <div class="section-header">
+                                <div class="section-icon">
+                                    <i class="bi bi-table"></i>
+                                </div>
+                                <div class="section-title">
+                                    <h5>Diferenças nas Tabelas</h5>
+                                    <span class="section-count">${comparisonData.tables.filter(t => t.status !== 'matching').length} diferenças</span>
+                                </div>
+                            </div>
+                            <div class="section-content">
+                                <div class="table-responsive">
+                                    <table class="table custom-table">
+                                        <thead>
+                                            <tr>
+                                                <th><i class="bi bi-tag me-2"></i>Tabela</th>
+                                                <th><i class="bi bi-flag me-2"></i>Status</th>
+                                                <th><i class="bi bi-info-circle me-2"></i>Detalhes</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${comparisonData.tables.filter(table => table.status !== 'matching').map(table => `
+                                                <tr class="difference-row ${table.status === 'missing' ? 'missing' : 'different'}">
+                                                    <td>
+                                                        <div class="table-name">
+                                                            <i class="bi bi-table me-2"></i>
+                                                            <strong>${table.name}</strong>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span class="status-badge ${table.status === 'missing' ? 'missing' : 'different'}">
+                                                            <i class="bi ${table.status === 'missing' ? 'bi-x-circle' : 'bi-exclamation-triangle'} me-1"></i>
+                                                            ${table.status === 'missing' ? 'Faltando' : 'Diferente'}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="details-text">
+                                                            ${table.details ? table.details : 'Diferenças encontradas na estrutura da tabela'}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Columns Comparison -->
+                    ${comparisonData.columns && comparisonData.columns.length > 0 ? `
+                        <div class="difference-section mb-4">
+                            <div class="section-header">
+                                <div class="section-icon">
+                                    <i class="bi bi-columns"></i>
+                                </div>
+                                <div class="section-title">
+                                    <h5>Diferenças nas Colunas</h5>
+                                    <span class="section-count">${comparisonData.columns.length} diferenças</span>
+                                </div>
+                            </div>
+                            <div class="section-content">
+                                <div class="table-responsive">
+                                    <table class="table custom-table">
+                                        <thead>
+                                            <tr>
+                                                <th><i class="bi bi-diagram-3 me-2"></i>Tabela</th>
+                                                <th><i class="bi bi-tag me-2"></i>Coluna</th>
+                                                <th><i class="bi bi-flag me-2"></i>Status</th>
+                                                <th><i class="bi bi-info-circle me-2"></i>Detalhes</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${comparisonData.columns.map(col => `
+                                                <tr class="difference-row ${col.status === 'missing' ? 'missing' : 'different'}">
+                                                    <td>
+                                                        <div class="table-name">
+                                                            <i class="bi bi-table me-2"></i>
+                                                            ${col.table}
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="column-name">
+                                                            <i class="bi bi-tag me-2"></i>
+                                                            <strong>${col.name}</strong>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span class="status-badge ${col.status === 'missing' ? 'missing' : 'different'}">
+                                                            <i class="bi ${col.status === 'missing' ? 'bi-x-circle' : 'bi-exclamation-triangle'} me-1"></i>
+                                                            ${col.status === 'missing' ? 'Faltando' : 'Diferente'}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="details-text">
+                                                            ${col.details ? col.details : 'Diferenças encontradas na coluna'}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Data Comparison -->
+                    ${comparisonData.data && comparisonData.data.some(d => d.differences > 0) ? `
+                        <div class="difference-section">
+                            <div class="section-header">
+                                <div class="section-icon">
+                                    <i class="bi bi-database"></i>
+                                </div>
+                                <div class="section-title">
+                                    <h5>Diferenças nos Dados</h5>
+                                    <span class="section-count">${comparisonData.data.filter(d => d.differences > 0).length} tabelas afetadas</span>
+                                </div>
+                            </div>
+                            <div class="section-content">
+                                <div class="table-responsive">
+                                    <table class="table custom-table">
+                                        <thead>
+                                            <tr>
+                                                <th><i class="bi bi-table me-2"></i>Tabela</th>
+                                                <th><i class="bi bi-flag me-2"></i>Status</th>
+                                                <th><i class="bi bi-pc-display me-2"></i>Local</th>
+                                                <th><i class="bi bi-cloud me-2"></i>Produção</th>
+                                                <th><i class="bi bi-graph-up me-2"></i>Diferenças</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${comparisonData.data.filter(data => data.differences > 0).map(data => `
+                                                <tr class="difference-row different">
+                                                    <td>
+                                                        <div class="table-name">
+                                                            <i class="bi bi-table me-2"></i>
+                                                            <strong>${data.table}</strong>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span class="status-badge different">
+                                                            <i class="bi bi-exclamation-triangle me-1"></i>
+                                                            Dados Diferentes
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="count-badge local">
+                                                            <span class="count">${data.local_count}</span>
+                                                            <small>registros</small>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="count-badge production">
+                                                            <span class="count">${data.production_count}</span>
+                                                            <small>registros</small>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="differences-highlight">
+                                                            <span class="differences-number">${data.differences}</span>
+                                                            <small>diferenças</small>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+                ` : ''}
+            </div>
         </div>
+
+        <style>
+        .comparison-results {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .comparison-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            color: white;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .header-icon {
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-text h4 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .header-text p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .custom-tabs {
+            border: none;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 0.5rem;
+            gap: 0.5rem;
+        }
+
+        .custom-tabs .nav-link {
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .custom-tabs .nav-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .custom-tabs .nav-link:hover:not(.active) {
+            background: rgba(108, 117, 125, 0.1);
+            color: #495057;
+        }
+
+        .tab-text {
+            font-weight: 500;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .stat-card.total {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .stat-card.matching {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .stat-card.different {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: white;
+        }
+
+        .stat-card.missing {
+            background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+            color: white;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            opacity: 0.9;
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        .success-state {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-radius: 15px;
+            border: 1px solid #c3e6cb;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            color: #28a745;
+            margin-bottom: 1rem;
+            animation: bounceIn 0.8s ease;
+        }
+
+        .success-title {
+            color: #155724;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .success-message {
+            color: #155724;
+            opacity: 0.8;
+            font-size: 1.1rem;
+        }
+
+        .success-decoration {
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 3rem;
+            color: rgba(40, 167, 69, 0.1);
+            transform: rotate(15deg);
+        }
+
+        .differences-alert {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 1px solid #ffeaa7;
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .alert-icon {
+            font-size: 2rem;
+            color: #856404;
+        }
+
+        .alert-content h6 {
+            color: #856404;
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+        }
+
+        .alert-content p {
+            color: #856404;
+            opacity: 0.8;
+            margin: 0;
+        }
+
+        .difference-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .section-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .section-title h5 {
+            margin: 0;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .section-count {
+            background: rgba(108, 117, 125, 0.1);
+            color: #6c757d;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .section-content {
+            padding: 1.5rem;
+        }
+
+        .custom-table {
+            margin: 0;
+            border: none;
+        }
+
+        .custom-table thead th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .custom-table tbody tr {
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .custom-table tbody tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+            transform: scale(1.01);
+        }
+
+        .difference-row.missing {
+            background: linear-gradient(90deg, rgba(220, 53, 69, 0.05) 0%, transparent 100%);
+        }
+
+        .difference-row.different {
+            background: linear-gradient(90deg, rgba(255, 193, 7, 0.05) 0%, transparent 100%);
+        }
+
+        .table-name, .column-name {
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .status-badge.missing {
+            background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+            color: white;
+        }
+
+        .status-badge.different {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            color: #212529;
+        }
+
+        .details-text {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .count-badge {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0.5rem;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .count-badge.local {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.05);
+        }
+
+        .count-badge.production {
+            border-color: #007bff;
+            background: rgba(0, 123, 255, 0.05);
+        }
+
+        .count-badge .count {
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: block;
+            line-height: 1;
+        }
+
+        .count-badge small {
+            color: #6c757d;
+            font-size: 0.7rem;
+        }
+
+        .differences-highlight {
+            background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 0.5rem;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .differences-number {
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: block;
+            line-height: 1;
+        }
+
+        .differences-highlight small {
+            font-size: 0.7rem;
+            opacity: 0.9;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .stat-card {
+                padding: 1rem;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+        }
+        </style>
     `;
+
+    // Add animation to stats cards
+    setTimeout(() => {
+        const statCards = container.querySelectorAll('.stat-card');
+        statCards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.animation = 'bounceIn 0.6s ease forwards';
+            }, index * 100);
+        });
+    }, 100);
+}
+
+function getDifferencesCount(comparisonData) {
+    let count = 0;
+    if (comparisonData.tables) count += comparisonData.tables.filter(t => t.status !== 'matching').length;
+    if (comparisonData.columns) count += comparisonData.columns.length;
+    if (comparisonData.data) count += comparisonData.data.filter(d => d.differences > 0).length;
+    return count;
 }
 
 function addLogEntry(container, message, type = 'info') {
@@ -1202,3 +1733,4 @@ function addLogEntry(container, message, type = 'info') {
     container.appendChild(logEntry);
     container.scrollTop = container.scrollHeight;
 }
+
