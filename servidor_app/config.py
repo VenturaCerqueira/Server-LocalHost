@@ -23,8 +23,8 @@ class Config:
 
     # Configurações para uploads
     UPLOAD_FOLDER = 'uploads'
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
-    ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip'}
+    MAX_CONTENT_LENGTH = 2048 * 1024 * 1024  # 2 GB (aumentado para permitir importação de bancos muito grandes)
+    ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip', 'sql'}
 
     # --- Configurações Adicionadas para Gerenciamento de Banco de Dados ---
 

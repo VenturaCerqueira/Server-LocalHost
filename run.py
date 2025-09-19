@@ -31,7 +31,11 @@ def start_ngrok(port):
         public_url = ngrok.connect(
             port,
             "http",
-            auth=basic_auth
+            auth=basic_auth,
+            options={
+                "request_timeout": 300,  # 5 minutes timeout
+                "response_timeout": 300,  # 5 minutes timeout
+            }
         ).public_url
 
         print(f" * Túnel Ngrok seguro rodando em: {public_url}")

@@ -1,3 +1,4 @@
+
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, jsonify, session, make_response
 from flask_login import login_required, current_user, login_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -811,12 +812,14 @@ def import_database(db_name):
         if result['success']:
             return jsonify({
                 'success': True,
-                'message': result['message']
+                'message': result['message'],
+                'analysis_results': result.get('analysis', {})
             })
         else:
             return jsonify({
                 'success': False,
-                'error': result['error']
+                'error': result['error'],
+                'analysis_results': result.get('analysis', {})
             }), 500
 
     except Exception as e:

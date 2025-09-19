@@ -259,10 +259,10 @@
                         <label for="sqlFile" class="form-label">
                             <i class="bi bi-file-earmark-code me-1"></i>Arquivo SQL
                         </label>
-                        <input type="file" class="form-control" id="sqlFile" name="sqlFile" accept=".sql" required>
+<input type="file" class="form-control" id="sqlFile" name="sql_file" accept=".sql" required>
                         <div class="form-text">
                             <i class="bi bi-filetype-sql me-1"></i>
-                            Selecione um arquivo .sql válido (máx. 50MB).
+                            Selecione um arquivo .sql válido (sem limite de tamanho).
                         </div>
                     </div>
 
@@ -289,6 +289,14 @@
                             <i class="bi bi-hourglass-split fs-4 mb-2"></i>
                             <br>Iniciando importação...
                         </div>
+                    </div>
+                </div>
+
+                <!-- Resultados da análise (inicialmente oculto) -->
+                <div id="analysisResultsContainer" class="mt-3" style="display: none;">
+                    <label class="form-label">Resultados da Análise do Arquivo SQL</label>
+                    <div id="analysisResultsContent" class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Analysis results will be populated here -->
                     </div>
                 </div>
             </div>
@@ -329,6 +337,37 @@
                 </div>
                 <div id="compareResults" class="mt-3" style="display: none;">
                     <!-- Results will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Análise de Banco -->
+<div class="modal fade" id="analyzeModal" tabindex="-1" aria-labelledby="analyzeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="analyzeModalLabel">
+                    <i class="bi bi-bar-chart-line me-2"></i>Análise de Banco de Dados
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Progresso da Análise</label>
+                    <div class="progress">
+                        <div class="progress-bar" id="analyzeProgress" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div id="analyzeLogContent" class="bg-dark text-light p-3 rounded" style="font-family: monospace; font-size: 0.875rem; max-height: 300px; overflow-y: auto;">
+                    <div class="text-center text-muted">
+                        <i class="bi bi-hourglass-split fs-4 mb-2"></i>
+                        <br>Iniciando análise do banco de dados...
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1311,6 +1350,10 @@ function startImport() {
         return;
     }
 
+    // Obter valores do formulário
+    const targetDatabase = document.getElementById('targetDatabase').value;
+    const sqlFile = document.getElementById('sqlFile').files[0];
+
     // Obter elementos do modal
     const modal = document.getElementById('importModal');
     const progressContainer = document.getElementById('importProgressContainer');
@@ -1333,70 +1376,372 @@ function startImport() {
 
     // Adicionar timestamp inicial
     const startTime = new Date();
-    addLogEntry(logContent, `Iniciando importação...`, 'info');
+    addLogEntry(logContent, `Iniciando importação do banco "${targetDatabase}"...`, 'info');
+    addLogEntry(logContent, `Arquivo: ${sqlFile.name}`, 'info');
+    addLogEntry(logContent, `Tamanho: ${(sqlFile.size / 1024 / 1024).toFixed(2)} MB`, 'info');
     addLogEntry(logContent, `Timestamp: ${startTime.toLocaleString()}`, 'info');
     addLogEntry(logContent, '', 'info');
 
-    // Simular processo de importação com barra de progresso
-    simulateImportProcessWithProgress(logContent, progressBar, formData, startTime, () => {
-        // Após importação completa, reabilitar botão
-        startBtn.disabled = false;
-        startBtn.innerHTML = originalText;
+    // Criar FormData para envio
+    const uploadData = new FormData();
+    uploadData.append('sql_file', sqlFile);
 
-        // Fechar modal após alguns segundos
-        setTimeout(() => {
-            const bsModal = bootstrap.Modal.getInstance(modal);
-            bsModal.hide();
-            showAlert('Importação concluída com sucesso!', 'success');
+    // Fazer requisição para o backend
+    fetch(`/databases/import/${targetDatabase}`, {
+        method: 'POST',
+        body: uploadData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Importação bem-sucedida
+            addLogEntry(logContent, 'Importação concluída com sucesso!', 'success');
+            addLogEntry(logContent, data.message || 'Banco de dados criado e populado.', 'success');
 
-            // Recarregar página para atualizar lista de bancos
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        }, 2000);
-    });
-}
+            // Atualizar barra de progresso para 100%
+            progressBar.style.width = '100%';
+            progressBar.setAttribute('aria-valuenow', 100);
 
-// Função para simular o processo de importação com barra de progresso
-function simulateImportProcessWithProgress(logContent, progressBar, formData, startTime, onComplete) {
-    const steps = [
-        { message: 'Validando arquivo SQL...', delay: 500 },
-        { message: 'Verificando permissões do banco de dados...', delay: 300 },
-        { message: 'Fazendo backup do banco atual (opcional)...', delay: 400 },
-        { message: 'Conectando ao banco de dados...', delay: 300 },
-        { message: 'Executando comandos SQL...', delay: 2000 },
-        { message: 'Verificando integridade dos dados...', delay: 800 },
-        { message: 'Finalizando importação...', delay: 400 },
-        { message: 'Importação concluída com sucesso!', delay: 200, type: 'success' }
-    ];
-
-    let currentStep = 0;
-
-    function executeStep() {
-        if (currentStep < steps.length) {
-            const step = steps[currentStep];
-            addLogEntry(logContent, step.message, step.type || 'info');
-
-            // Atualizar barra de progresso
-            const progress = ((currentStep + 1) / steps.length) * 100;
-            progressBar.style.width = `${progress}%`;
-            progressBar.setAttribute('aria-valuenow', progress);
-
-            currentStep++;
-            setTimeout(executeStep, step.delay);
-        } else {
-            // Finalizar
+            // Calcular tempo total
             const endTime = new Date();
             const duration = (endTime - startTime) / 1000;
             addLogEntry(logContent, '', 'info');
             addLogEntry(logContent, `Tempo total: ${duration.toFixed(2)} segundos`, 'success');
 
-            // Chamar callback para finalizar
-            setTimeout(onComplete, 500);
+            // Exibir resultados da análise se disponíveis
+            if (data.analysis_results) {
+                displayAnalysisResults(data.analysis_results, targetDatabase);
+            }
+
+            // Reabilitar botão
+            startBtn.disabled = false;
+            startBtn.innerHTML = originalText;
+
+            // Fechar modal após alguns segundos
+            setTimeout(() => {
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                bsModal.hide();
+                showAlert('Importação concluída com sucesso!', 'success');
+
+                // Recarregar página para atualizar lista de bancos
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }, 3000);
+
+        } else {
+            // Erro na importação
+            addLogEntry(logContent, 'Erro na importação!', 'error');
+            addLogEntry(logContent, data.error || 'Erro desconhecido', 'error');
+
+            if (data.details) {
+                addLogEntry(logContent, `Detalhes: ${data.details}`, 'error');
+            }
+
+            if (data.suggestion) {
+                addLogEntry(logContent, `Sugestão: ${data.suggestion}`, 'warning');
+            }
+
+            // Reabilitar botão
+            startBtn.disabled = false;
+            startBtn.innerHTML = originalText;
+
+            // Mostrar erro
+            showAlert(`Erro na importação: ${data.error}`, 'danger');
         }
+    })
+    .catch(error => {
+        console.error('Erro na importação:', error);
+
+        // Adicionar erro ao log
+        addLogEntry(logContent, 'Erro na comunicação com o servidor!', 'error');
+        addLogEntry(logContent, error.message, 'error');
+
+        // Reabilitar botão
+        startBtn.disabled = false;
+        startBtn.innerHTML = originalText;
+
+        // Mostrar erro
+        showAlert(`Erro na importação: ${error.message}`, 'danger');
+    });
+
+    // Simular progresso visual enquanto a requisição está em andamento
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        if (progress < 90) { // Não chega a 100% até receber resposta
+            progress += Math.random() * 10;
+            if (progress > 90) progress = 90;
+            progressBar.style.width = `${progress}%`;
+            progressBar.setAttribute('aria-valuenow', progress);
+        }
+    }, 500);
+
+    // Limpar intervalo quando a requisição terminar (será feito no then/catch)
+    // Nota: Em um cenário real, você poderia usar Server-Sent Events ou WebSockets
+    // para receber atualizações de progresso em tempo real do backend
+}
+
+
+
+// Função para exibir resultados da análise
+function displayAnalysisResults(analysisResults, databaseName) {
+    const container = document.getElementById('analysisResultsContainer');
+    const content = document.getElementById('analysisResultsContent');
+
+    if (!container || !content) {
+        console.error('Container de resultados da análise não encontrado');
+        return;
     }
 
-    executeStep();
+    // Limpar conteúdo anterior
+    content.innerHTML = '';
+
+    // Criar conteúdo da análise
+    let html = `
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-bar-chart-line me-2"></i>
+                    Análise do Arquivo SQL - ${databaseName}
+                </h5>
+            </div>
+            <div class="card-body">
+    `;
+
+    // Estatísticas gerais
+    if (analysisResults.stats) {
+        html += `
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">
+                                <i class="bi bi-table me-2"></i>
+                                Tabelas
+                            </h5>
+                            <h2>${analysisResults.stats.tables || 0}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">
+                                <i class="bi bi-columns me-2"></i>
+                                Colunas
+                            </h5>
+                            <h2>${analysisResults.stats.columns || 0}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">
+                                <i class="bi bi-key me-2"></i>
+                                Chaves
+                            </h5>
+                            <h2>${analysisResults.stats.constraints || 0}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">
+                                <i class="bi bi-file-earmark-code me-2"></i>
+                                Statements
+                            </h5>
+                            <h2>${analysisResults.stats.statements || 0}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Lista de tabelas
+    if (analysisResults.tables && analysisResults.tables.length > 0) {
+        html += `
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="bi bi-table me-2"></i>
+                                Tabelas Encontradas (${analysisResults.tables.length})
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Nome da Tabela</th>
+                                            <th>Colunas</th>
+                                            <th>Tipo</th>
+                                            <th>Engine</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+        `;
+
+        analysisResults.tables.forEach(table => {
+            html += `
+                <tr>
+                    <td>
+                        <strong>${table.name}</strong>
+                    </td>
+                    <td>
+                        <span class="badge bg-primary">${table.columns || 0}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-secondary">${table.type || 'TABLE'}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-info">${table.engine || 'InnoDB'}</span>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Avisos e problemas
+    if (analysisResults.warnings && analysisResults.warnings.length > 0) {
+        html += `
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card border-warning">
+                        <div class="card-header bg-warning">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                Avisos (${analysisResults.warnings.length})
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+        `;
+
+        analysisResults.warnings.forEach(warning => {
+            html += `
+                <li class="list-group-item">
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-exclamation-triangle text-warning me-2 mt-1"></i>
+                        <div>
+                            <strong>${warning.type}:</strong> ${warning.message}
+                            ${warning.line ? `<br><small class="text-muted">Linha: ${warning.line}</small>` : ''}
+                        </div>
+                    </div>
+                </li>
+            `;
+        });
+
+        html += `
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Erros
+    if (analysisResults.errors && analysisResults.errors.length > 0) {
+        html += `
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-x-circle me-2"></i>
+                                Erros (${analysisResults.errors.length})
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+        `;
+
+        analysisResults.errors.forEach(error => {
+            html += `
+                <li class="list-group-item">
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-x-circle text-danger me-2 mt-1"></i>
+                        <div>
+                            <strong>${error.type}:</strong> ${error.message}
+                            ${error.line ? `<br><small class="text-muted">Linha: ${error.line}</small>` : ''}
+                        </div>
+                    </div>
+                </li>
+            `;
+        });
+
+        html += `
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Informações adicionais
+    if (analysisResults.metadata) {
+        html += `
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Informações do Arquivo
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Tamanho:</strong> ${(analysisResults.metadata.size / 1024 / 1024).toFixed(2)} MB</p>
+                                    <p><strong>Codificação:</strong> ${analysisResults.metadata.encoding || 'UTF-8'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Data de Análise:</strong> ${new Date().toLocaleString()}</p>
+                                    <p><strong>Versão MySQL:</strong> ${analysisResults.metadata.mysql_version || 'Não detectada'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    html += `
+            </div>
+        </div>
+    `;
+
+    // Inserir conteúdo
+    content.innerHTML = html;
+
+    // Mostrar container
+    container.style.display = 'block';
+
+    // Scroll para o container
+    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // Event listener para o checkbox de confirmação

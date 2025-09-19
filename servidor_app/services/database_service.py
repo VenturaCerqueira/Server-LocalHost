@@ -9,6 +9,7 @@ import logging
 import os
 import subprocess
 import tempfile
+import re
 from typing import Dict, List, Any, Optional, Tuple
 from contextlib import contextmanager
 import pymysql
@@ -514,23 +515,30 @@ def dump_production_database(config, db_name: str) -> Dict[str, Any]:
     prod_user = config.get('PROD_DB_USER', 'servidor')
     prod_password = config.get('PROD_DB_PASSWORD', 'servkinfo2013')
 
+    # Since this function is only for production DB dumps, no changes needed for local DBs here.
+    # The local MySQL database dump functions are separate and unaffected.
+
     try:
         logger.info(f"Iniciando dump do banco {db_name} da produção")
 
-        # Comando mysqldump para produção - solução simples sem FLUSH TABLES
+        # Comando mysqldump otimizado para permissões limitadas
         dump_cmd = [
             'mysqldump',
-            '--force',              # Continua mesmo com erros
-            '--quick',              # Dump linha por linha
-            '--lock-tables=false',  # Não bloqueia tabelas
-            '--no-tablespaces',     # Evita privilégios de tablespace
-            '--skip-opt',           # Desabilita opções padrão problemáticas
+            '--force',                    # Continua mesmo com erros
+            '--quick',                    # Dump linha por linha
+            '--lock-tables=false',        # Não bloqueia tabelas (útil se não tem privilégios LOCK)
+            '--no-tablespaces',           # Evita privilégios de tablespace
+            '--skip-opt',                 # Desabilita opções padrão problemáticas
+            '--set-gtid-purged=OFF',     # Evita problemas com GTID
+            '--single-transaction',       # Usa transação única se possível
+            '--no-create-db',             # Não tenta criar banco (já existe)
             '-u', prod_user,
             '-h', prod_host,
             '-P', str(prod_port),
             db_name
         ]
-        logger.info(f"Executando mysqldump para {db_name}")
+
+        logger.info(f"Executando mysqldump para {db_name} com parâmetros otimizados")
 
         # Define MYSQL_PWD no ambiente para segurança
         env = os.environ.copy()
@@ -555,23 +563,42 @@ def dump_production_database(config, db_name: str) -> Dict[str, Any]:
                 error_msg = result.stderr.decode('utf-8', errors='ignore').strip()
                 logger.error(f"Erro no dump: {error_msg}")
 
-                # Trata erro de acesso negado
+                # Trata erros específicos de permissões
                 if "Access denied" in error_msg:
                     return {
                         'success': False,
-                        'error': f'Acesso negado ao banco de produção. Verifique as permissões do usuário "{prod_user}".',
+                        'error': f'Acesso negado ao banco de dados "{db_name}".',
                         'details': error_msg,
-                        'suggestion': f'Execute no servidor de produção: GRANT ALL PRIVILEGES ON *.* TO \'{prod_user}\'@\'191.195.115.190\' IDENTIFIED BY \'senha\';'
+                        'suggestion': f'Execute no servidor: GRANT ALL PRIVILEGES ON {db_name}.* TO \'{prod_user}\'@\'%\'; FLUSH PRIVILEGES;'
+                    }
+
+                # Trata outros erros comuns
+                if "GTID" in error_msg:
+                    return {
+                        'success': False,
+                        'error': 'Erro relacionado ao GTID. O banco usa replicação GTID.',
+                        'details': error_msg,
+                        'suggestion': 'Adicione --set-gtid-purged=OFF ao comando mysqldump ou verifique configuração de replicação.'
                     }
 
                 return {
                     'success': False,
-                    'error': f'Falha no dump da produção: {error_msg}'
+                    'error': f'Falha no dump da produção: {error_msg}',
+                    'details': 'Verifique os logs detalhados para mais informações.'
                 }
 
             # Lê o conteúdo do arquivo como bytes
             with open(temp_path, 'rb') as dump_file:
                 dump_content = dump_file.read()
+
+            # Verifica se o dump não está vazio
+            if len(dump_content) < 100:  # Dump muito pequeno
+                logger.warning(f"Dump muito pequeno ({len(dump_content)} bytes) - pode estar incompleto")
+                return {
+                    'success': False,
+                    'error': 'Dump gerado está muito pequeno - pode estar incompleto ou vazio.',
+                    'details': dump_content.decode('utf-8', errors='ignore')[:500]
+                }
 
         finally:
             # Remove arquivo temporário
@@ -593,7 +620,8 @@ def dump_production_database(config, db_name: str) -> Dict[str, Any]:
         logger.error(f"Timeout no dump do banco {db_name}")
         return {
             'success': False,
-            'error': 'Timeout ao fazer dump do banco de dados'
+            'error': 'Timeout ao fazer dump do banco de dados (5 minutos)',
+            'suggestion': 'O banco pode ser muito grande ou a conexão muito lenta. Tente novamente ou verifique a conectividade.'
         }
 
     except Exception as e:
@@ -601,6 +629,130 @@ def dump_production_database(config, db_name: str) -> Dict[str, Any]:
         return {
             'success': False,
             'error': f'Erro inesperado: {str(e)}'
+        }
+
+def _dump_accessible_tables_only(config, db_name: str, prod_host: str, prod_port: int, prod_user: str, prod_password: str) -> Dict[str, Any]:
+    """
+    Tenta fazer dump apenas das tabelas que o usuário pode acessar
+    """
+    try:
+        logger.info(f"Tentando dump apenas das tabelas acessíveis para {db_name}")
+
+        # Primeiro, lista as tabelas que o usuário pode acessar
+        connection = pymysql.connect(
+            host=prod_host,
+            port=prod_port,
+            user=prod_user,
+            password=prod_password,
+            database=db_name,
+            connect_timeout=15
+        )
+
+        accessible_tables = []
+        with connection.cursor() as cursor:
+            try:
+                cursor.execute("SHOW TABLES;")
+                tables = cursor.fetchall()
+
+                for table_row in tables:
+                    table_name = list(table_row.values())[0]
+                    try:
+                        # Testa se pode fazer SELECT na tabela
+                        cursor.execute(f"SELECT 1 FROM `{table_name}` LIMIT 1;")
+                        accessible_tables.append(table_name)
+                        logger.info(f"Tabela {table_name}: acessível")
+                    except pymysql.MySQLError as e:
+                        logger.warning(f"Tabela {table_name}: não acessível - {str(e)}")
+                        continue
+
+            except pymysql.MySQLError as e:
+                logger.error(f"Erro ao listar tabelas: {str(e)}")
+                return {
+                    'success': False,
+                    'error': 'Não foi possível listar as tabelas do banco.',
+                    'details': str(e)
+                }
+
+        connection.close()
+
+        if not accessible_tables:
+            return {
+                'success': False,
+                'error': f'Nenhuma tabela acessível encontrada no banco "{db_name}".',
+                'details': f'Usuário "{prod_user}" não tem permissões SELECT em nenhuma tabela.'
+            }
+
+        logger.info(f"Tabelas acessíveis encontradas: {len(accessible_tables)}")
+
+        # Faz dump apenas das tabelas acessíveis
+        dump_cmd = [
+            'mysqldump',
+            '--force',
+            '--quick',
+            '--lock-tables=false',
+            '--no-tablespaces',
+            '--skip-opt',
+            '--set-gtid-purged=OFF',
+            '--no-create-db',
+            '-u', prod_user,
+            '-h', prod_host,
+            '-P', str(prod_port),
+            db_name
+        ] + accessible_tables  # Adiciona apenas as tabelas acessíveis
+
+        logger.info(f"Executando mysqldump apenas para tabelas acessíveis: {accessible_tables}")
+
+        env = os.environ.copy()
+        env['MYSQL_PWD'] = prod_password
+
+        with tempfile.NamedTemporaryFile(mode='w+b', suffix='.sql', delete=False) as temp_file:
+            temp_path = temp_file.name
+
+        try:
+            with open(temp_path, 'wb') as dump_file:
+                result = subprocess.run(
+                    dump_cmd,
+                    stdout=dump_file,
+                    stderr=subprocess.PIPE,
+                    env=env,
+                    timeout=300
+                )
+
+            if result.returncode != 0:
+                error_msg = result.stderr.decode('utf-8', errors='ignore').strip()
+                logger.error(f"Erro no dump parcial: {error_msg}")
+                return {
+                    'success': False,
+                    'error': f'Falha no dump parcial das tabelas acessíveis: {error_msg}',
+                    'details': f'Tabelas que tentaram acessar: {", ".join(accessible_tables)}'
+                }
+
+            with open(temp_path, 'rb') as dump_file:
+                dump_content = dump_file.read()
+
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+
+        timestamp = time.strftime('%Y%m%d_%H%M%S')
+
+        logger.info(f"Dump parcial concluído com sucesso ({len(dump_content)} caracteres, {len(accessible_tables)} tabelas)")
+
+        return {
+            'success': True,
+            'dump': dump_content,
+            'timestamp': timestamp,
+            'db_name': db_name,
+            'partial_dump': True,
+            'accessible_tables': accessible_tables,
+            'message': f'Dump parcial realizado com {len(accessible_tables)} tabelas acessíveis.'
+        }
+
+    except Exception as e:
+        logger.error(f"Erro no dump parcial: {str(e)}")
+        return {
+            'success': False,
+            'error': f'Erro no dump parcial: {str(e)}'
         }
 
 # Instância global será criada no app initialization
@@ -702,6 +854,170 @@ def delete_local_mysql_database(db_name: str, config) -> Dict[str, Any]:
             'error': f'Erro inesperado: {str(e)}'
         }
 
+def analyze_sql_file(sql_file_path: str) -> Dict[str, Any]:
+    """
+    Analisa arquivo SQL para identificar erros potenciais e problemas
+    """
+    issues = {
+        'errors': [],
+        'warnings': [],
+        'info': []
+    }
+
+    try:
+        with open(sql_file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+
+        # Verificar se o arquivo está vazio
+        if not content.strip():
+            issues['errors'].append("Arquivo SQL está vazio")
+            return issues
+
+        # Dividir em statements SQL (básico)
+        statements = []
+        current_statement = ""
+        in_string = False
+        string_char = None
+        in_comment = False
+
+        i = 0
+        while i < len(content):
+            char = content[i]
+
+            if in_comment:
+                if char == '\n':
+                    in_comment = False
+                i += 1
+                continue
+
+            if char == '#' or (char == '-' and i + 1 < len(content) and content[i + 1] == '-'):
+                in_comment = True
+                i += 1
+                continue
+
+            if not in_string:
+                if char in ('"', "'"):
+                    in_string = True
+                    string_char = char
+                elif char == ';':
+                    if current_statement.strip():
+                        statements.append(current_statement.strip())
+                        current_statement = ""
+                    i += 1
+                    continue
+            else:
+                if char == string_char and (i == 0 or content[i - 1] != '\\'):
+                    in_string = False
+                    string_char = None
+
+            current_statement += char
+            i += 1
+
+        # Adicionar último statement se não terminar com ;
+        if current_statement.strip():
+            statements.append(current_statement.strip())
+
+        # Analisar statements
+        tables_created = set()
+        tables_referenced = set()
+        foreign_keys = []
+
+        for stmt in statements:
+            stmt_upper = stmt.upper().strip()
+
+            # Ignorar comentários e statements vazios
+            if not stmt_upper or stmt_upper.startswith('--') or stmt_upper.startswith('#'):
+                continue
+
+            # Verificar CREATE TABLE
+            if stmt_upper.startswith('CREATE TABLE'):
+                try:
+                    # Extrair nome da tabela
+                    table_match = re.search(r'CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"]?(\w+)[`"]?', stmt_upper, re.IGNORECASE)
+                    if table_match:
+                        table_name = table_match.group(1)
+                        tables_created.add(table_name)
+
+                        # Verificar estrutura básica da tabela
+                        if '(' not in stmt or ')' not in stmt:
+                            issues['errors'].append(f"Tabela '{table_name}': Sintaxe CREATE TABLE inválida - parênteses ausentes")
+                        else:
+                            # Verificar colunas
+                            columns_part = stmt[stmt.find('(')+1:stmt.rfind(')')]
+                            columns = [col.strip() for col in columns_part.split(',') if col.strip()]
+
+                            if not columns:
+                                issues['warnings'].append(f"Tabela '{table_name}': Nenhuma coluna definida")
+
+                            for col in columns:
+                                col_upper = col.upper()
+                                # Verificar PRIMARY KEY
+                                if 'PRIMARY KEY' in col_upper:
+                                    if not re.search(r'\w+', col.split('PRIMARY KEY')[0].strip()):
+                                        issues['warnings'].append(f"Tabela '{table_name}': PRIMARY KEY sem nome de coluna")
+
+                                # Verificar FOREIGN KEY
+                                if 'REFERENCES' in col_upper:
+                                    fk_match = re.search(r'REFERENCES\s+[`"]?(\w+)[`"]?', col_upper, re.IGNORECASE)
+                                    if fk_match:
+                                        ref_table = fk_match.group(1)
+                                        tables_referenced.add(ref_table)
+                                        foreign_keys.append((table_name, ref_table))
+
+                except Exception as e:
+                    issues['errors'].append(f"Erro ao analisar CREATE TABLE: {str(e)}")
+
+            # Verificar INSERT INTO
+            elif stmt_upper.startswith('INSERT INTO'):
+                try:
+                    insert_match = re.search(r'INSERT\s+INTO\s+[`"]?(\w+)[`"]?', stmt_upper, re.IGNORECASE)
+                    if insert_match:
+                        table_name = insert_match.group(1)
+                        tables_referenced.add(table_name)
+
+                        # Verificar se VALUES está presente
+                        if 'VALUES' not in stmt_upper:
+                            issues['warnings'].append(f"INSERT INTO '{table_name}': Statement VALUES ausente")
+
+                except Exception as e:
+                    issues['warnings'].append(f"Erro ao analisar INSERT INTO: {str(e)}")
+
+            # Verificar DROP TABLE
+            elif stmt_upper.startswith('DROP TABLE'):
+                try:
+                    drop_match = re.search(r'DROP\s+TABLE\s+(?:IF\s+EXISTS\s+)?[`"]?(\w+)[`"]?', stmt_upper, re.IGNORECASE)
+                    if drop_match:
+                        table_name = drop_match.group(1)
+                        issues['warnings'].append(f"DROP TABLE '{table_name}': Statement de exclusão de tabela encontrado")
+
+                except Exception as e:
+                    issues['warnings'].append(f"Erro ao analisar DROP TABLE: {str(e)}")
+
+        # Verificar referências de tabelas
+        missing_tables = tables_referenced - tables_created
+        if missing_tables:
+            for table in missing_tables:
+                issues['warnings'].append(f"Tabela '{table}' é referenciada mas não foi criada no dump")
+
+        # Verificar foreign keys para tabelas inexistentes
+        for source_table, ref_table in foreign_keys:
+            if ref_table not in tables_created:
+                issues['warnings'].append(f"Foreign key em '{source_table}' referencia tabela inexistente '{ref_table}'")
+
+        # Estatísticas gerais
+        issues['info'].append(f"Total de statements SQL analisados: {len(statements)}")
+        issues['info'].append(f"Tabelas criadas: {len(tables_created)}")
+        issues['info'].append(f"Tabelas referenciadas: {len(tables_referenced)}")
+
+        if tables_created:
+            issues['info'].append(f"Tabelas encontradas: {', '.join(sorted(tables_created))}")
+
+        return issues
+
+    except Exception as e:
+        issues['errors'].append(f"Erro geral na análise: {str(e)}")
+        return issues
+
 def import_sql_file_to_mysql(sql_file_path: str, db_name: str, config) -> Dict[str, Any]:
     """
     Importa arquivo SQL para banco de dados MySQL local (XAMPP)
@@ -711,6 +1027,10 @@ def import_sql_file_to_mysql(sql_file_path: str, db_name: str, config) -> Dict[s
 
     try:
         logger.info(f"Iniciando importação do arquivo {sql_file_path} para o banco {db_name}")
+
+        # Primeiro, analisar o arquivo SQL
+        logger.info("Analisando arquivo SQL...")
+        analysis_result = analyze_sql_file(sql_file_path)
 
         # Caminho completo para o executável MySQL do XAMPP
         mysql_path = r'D:\Servidor\xampp\mysql\bin\mysql.exe'
@@ -735,7 +1055,8 @@ def import_sql_file_to_mysql(sql_file_path: str, db_name: str, config) -> Dict[s
             logger.error(f"Erro ao criar banco: {error_msg}")
             return {
                 'success': False,
-                'error': f'Falha ao criar banco de dados: {error_msg}'
+                'error': f'Falha ao criar banco de dados: {error_msg}',
+                'analysis': analysis_result
             }
 
         logger.info(f"Banco de dados {db_name} criado/verificado com sucesso")
@@ -763,36 +1084,45 @@ def import_sql_file_to_mysql(sql_file_path: str, db_name: str, config) -> Dict[s
         if result.returncode != 0:
             error_msg = result.stderr.strip()
             logger.error(f"Erro na importação: {error_msg}")
+            # Add detailed error logging to a file for debugging
+            error_log_path = os.path.join(os.path.dirname(sql_file_path), 'import_error.log')
+            with open(error_log_path, 'w', encoding='utf-8') as f:
+                f.write(error_msg)
             return {
                 'success': False,
-                'error': f'Falha na importação: {error_msg}'
+                'error': f'Falha na importação: {error_msg}. Veja o arquivo de log: {error_log_path}',
+                'analysis': analysis_result
             }
 
         logger.info(f"Importação do arquivo SQL para {db_name} concluída com sucesso")
         return {
             'success': True,
-            'message': f'Arquivo SQL importado com sucesso para o banco {db_name}'
+            'message': f'Arquivo SQL importado com sucesso para o banco {db_name}',
+            'analysis': analysis_result
         }
 
     except FileNotFoundError:
         logger.error(f"Arquivo SQL não encontrado: {sql_file_path}")
         return {
             'success': False,
-            'error': f'Arquivo SQL não encontrado: {sql_file_path}'
+            'error': f'Arquivo SQL não encontrado: {sql_file_path}',
+            'analysis': {'errors': ['Arquivo não encontrado'], 'warnings': [], 'info': []}
         }
 
     except UnicodeDecodeError as e:
         logger.error(f"Erro de codificação no arquivo SQL: {str(e)}")
         return {
             'success': False,
-            'error': f'Erro de codificação no arquivo SQL. Tente salvar o arquivo com codificação UTF-8.'
+            'error': f'Erro de codificação no arquivo SQL. Tente salvar o arquivo com codificação UTF-8.',
+            'analysis': {'errors': [f'Erro de codificação: {str(e)}'], 'warnings': [], 'info': []}
         }
 
     except Exception as e:
         logger.error(f"Erro inesperado na importação: {str(e)}")
         return {
             'success': False,
-            'error': f'Erro inesperado: {str(e)}'
+            'error': f'Erro inesperado: {str(e)}',
+            'analysis': {'errors': [f'Erro inesperado: {str(e)}'], 'warnings': [], 'info': []}
         }
 
 # Debug log para verificar se o módulo foi carregado corretamente
