@@ -744,6 +744,93 @@ def analyze_database(db_name):
         if connection and connection.open:
             connection.close()
 
+@main_bp.route('/databases/delete/<db_name>', methods=['DELETE'])
+@login_required
+@require_access(AREAS['banco_dados'])
+def delete_database(db_name):
+    # Delete local MySQL database
+    db_type = request.args.get('type', 'local')
+
+    if db_type == 'local':
+        result = db_service.delete_local_mysql_database(db_name, current_app.config)
+    else:
+        # For production databases, don't allow deletion
+        return jsonify({
+            'success': False,
+            'error': 'Não é permitido deletar bancos de produção'
+        }), 403
+
+    if result['success']:
+        return jsonify({
+            'success': True,
+            'message': result['message']
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'error': result['error']
+        }), 500
+
+@main_bp.route('/databases/import/<db_name>', methods=['POST'])
+@login_required
+@require_access(AREAS['banco_dados'])
+def import_database(db_name):
+    # Import SQL file to local MySQL database
+    if 'sql_file' not in request.files:
+        return jsonify({
+            'success': False,
+            'error': 'Nenhum arquivo SQL enviado'
+        }), 400
+
+    sql_file = request.files['sql_file']
+    if sql_file.filename == '':
+        return jsonify({
+            'success': False,
+            'error': 'Nome do arquivo vazio'
+        }), 400
+
+    # Validate file extension
+    if not sql_file.filename.lower().endswith('.sql'):
+        return jsonify({
+            'success': False,
+            'error': 'Apenas arquivos .sql são permitidos'
+        }), 400
+
+    # Save uploaded file temporarily
+    import tempfile
+    import os
+
+    with tempfile.NamedTemporaryFile(mode='wb', suffix='.sql', delete=False) as temp_file:
+        temp_path = temp_file.name
+        sql_file.save(temp_file)
+
+    try:
+        # Import the SQL file
+        result = db_service.import_sql_file_to_mysql(temp_path, db_name, current_app.config)
+
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'message': result['message']
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result['error']
+            }), 500
+
+    except Exception as e:
+        current_app.logger.error(f"Erro na importação do banco {db_name}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Erro interno do servidor: {str(e)}'
+        }), 500
+
+    finally:
+        # Clean up temporary file
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
+
 @main_bp.route('/databases/tables/<db_name>')
 @login_required
 @require_access(AREAS['banco_dados'])

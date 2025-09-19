@@ -656,5 +656,144 @@ def get_production_mysql_connection(config, database=None):
     connection = pymysql.connect(**conn_params)
     return connection
 
+def delete_local_mysql_database(db_name: str, config) -> Dict[str, Any]:
+    """
+    Deleta um banco de dados MySQL local (XAMPP)
+    """
+    local_user = 'root'
+    local_password = ''
+
+    try:
+        # Caminho completo para o executável MySQL do XAMPP
+        mysql_path = r'D:\Servidor\xampp\mysql\bin\mysql.exe'
+
+        # Comando para deletar banco
+        cmd = [
+            mysql_path,
+            '-u', local_user,
+            f'-p{local_password}' if local_password else '',
+            '-e', f'DROP DATABASE IF EXISTS {db_name};'
+        ]
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True
+        )
+
+        if result.returncode != 0:
+            error_msg = result.stderr.strip()
+            logger.error(f"Erro ao deletar banco local {db_name}: {error_msg}")
+            return {
+                'success': False,
+                'error': f'Falha ao deletar banco local: {error_msg}'
+            }
+
+        logger.info(f"Banco de dados local {db_name} deletado com sucesso")
+        return {
+            'success': True,
+            'message': f'Banco de dados {db_name} deletado com sucesso'
+        }
+
+    except Exception as e:
+        logger.error(f"Erro ao deletar banco local {db_name}: {str(e)}")
+        return {
+            'success': False,
+            'error': f'Erro inesperado: {str(e)}'
+        }
+
+def import_sql_file_to_mysql(sql_file_path: str, db_name: str, config) -> Dict[str, Any]:
+    """
+    Importa arquivo SQL para banco de dados MySQL local (XAMPP)
+    """
+    local_user = 'root'
+    local_password = ''
+
+    try:
+        logger.info(f"Iniciando importação do arquivo {sql_file_path} para o banco {db_name}")
+
+        # Caminho completo para o executável MySQL do XAMPP
+        mysql_path = r'D:\Servidor\xampp\mysql\bin\mysql.exe'
+
+        # Primeiro, criar o banco se não existir
+        create_db_cmd = [
+            mysql_path,
+            '-u', local_user,
+            f'-p{local_password}' if local_password else '',
+            '-e', f'CREATE DATABASE IF NOT EXISTS {db_name};'
+        ]
+
+        logger.info("Criando banco de dados se não existir...")
+        create_result = subprocess.run(
+            create_db_cmd,
+            capture_output=True,
+            text=True
+        )
+
+        if create_result.returncode != 0:
+            error_msg = create_result.stderr.strip()
+            logger.error(f"Erro ao criar banco: {error_msg}")
+            return {
+                'success': False,
+                'error': f'Falha ao criar banco de dados: {error_msg}'
+            }
+
+        logger.info(f"Banco de dados {db_name} criado/verificado com sucesso")
+
+        # Comando para importar o arquivo SQL
+        import_cmd = [
+            mysql_path,
+            '-u', local_user,
+            f'-p{local_password}' if local_password else '',
+            db_name
+        ]
+
+        logger.info(f"Executando importação do arquivo SQL...")
+
+        # Executar importação com o arquivo SQL
+        with open(sql_file_path, 'r', encoding='utf-8', errors='ignore') as sql_file:
+            result = subprocess.run(
+                import_cmd,
+                stdin=sql_file,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+        if result.returncode != 0:
+            error_msg = result.stderr.strip()
+            logger.error(f"Erro na importação: {error_msg}")
+            return {
+                'success': False,
+                'error': f'Falha na importação: {error_msg}'
+            }
+
+        logger.info(f"Importação do arquivo SQL para {db_name} concluída com sucesso")
+        return {
+            'success': True,
+            'message': f'Arquivo SQL importado com sucesso para o banco {db_name}'
+        }
+
+    except FileNotFoundError:
+        logger.error(f"Arquivo SQL não encontrado: {sql_file_path}")
+        return {
+            'success': False,
+            'error': f'Arquivo SQL não encontrado: {sql_file_path}'
+        }
+
+    except UnicodeDecodeError as e:
+        logger.error(f"Erro de codificação no arquivo SQL: {str(e)}")
+        return {
+            'success': False,
+            'error': f'Erro de codificação no arquivo SQL. Tente salvar o arquivo com codificação UTF-8.'
+        }
+
+    except Exception as e:
+        logger.error(f"Erro inesperado na importação: {str(e)}")
+        return {
+            'success': False,
+            'error': f'Erro inesperado: {str(e)}'
+        }
+
 # Debug log para verificar se o módulo foi carregado corretamente
 logger.info("database_service module loaded, dump_production_database function available: %s", hasattr(__import__('__main__'), 'dump_production_database') or 'dump_production_database' in globals())

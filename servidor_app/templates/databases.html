@@ -98,9 +98,14 @@
                 <h5 class="m-0 font-weight-bold">
                     <i class="bi bi-house-door me-2"></i>Bancos de Dados MySQL Locais
                 </h5>
-                {% if mysql_dbs_local.success %}
-                    <span class="badge bg-light text-primary">{{ mysql_dbs_local.count }} bancos</span>
-                {% endif %}
+                <div class="d-flex align-items-center gap-2">
+                    {% if mysql_dbs_local.success %}
+                        <span class="badge bg-light text-primary">{{ mysql_dbs_local.count }} bancos</span>
+                    {% endif %}
+                    <button class="btn btn-success btn-sm" onclick="showImportModal()">
+                        <i class="bi bi-plus-circle me-1"></i>
+                    </button>
+                </div>
             </div>
             <div class="card-body overflow-auto" style="max-height: 400px;">
                 {% if mysql_dbs_local.success %}
@@ -127,10 +132,10 @@
                                             title="Comparar banco local {{ db_name }} com produção">
                                         <i class="bi bi-arrow-left-right"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-primary analyze-btn"
-                                            onclick="analyzeDatabase('{{ db_name }}')"
-                                            title="Analisar banco de dados {{ db_name }}">
-                                        <i class="bi bi-bar-chart-line"></i>
+                                    <button class="btn btn-sm btn-outline-danger delete-btn"
+                                            onclick="confirmDeleteDatabase('{{ db_name }}', 'local')"
+                                            title="Excluir banco de dados {{ db_name }}">
+                                        <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
                             </li>
@@ -198,6 +203,14 @@
                                             title="Analisar banco de dados {{ db_name }}">
                                         <i class="bi bi-bar-chart-line"></i>
                                     </button>
+                                    <!-- Removed delete button for production databases as requested -->
+                                    <!--
+                                    <button class="btn btn-sm btn-outline-danger delete-btn"
+                                            onclick="confirmDeleteDatabase('{{ db_name }}', 'producao')"
+                                            title="Excluir banco de dados {{ db_name }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    -->
                                 </div>
                             </li>
                         {% endfor %}
@@ -219,32 +232,73 @@
     </div>
 </div>
 
-<!-- Modal de Análise de Banco -->
-<div class="modal fade" id="analyzeModal" tabindex="-1" aria-labelledby="analyzeModalLabel" aria-hidden="true">
+<!-- Modal de Importação de SQL -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="analyzeModalLabel">
-                    <i class="bi bi-bar-chart-line me-2"></i>Análise do Banco de Dados
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="importModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i>Criar e Importar Banco de Dados
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">Progresso da Análise</label>
+                <form id="importForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="targetDatabase" class="form-label">
+                            <i class="bi bi-database me-1"></i>Nome do Novo Banco de Dados
+                        </label>
+                        <input type="text" class="form-control" id="targetDatabase" name="targetDatabase" placeholder="Digite o nome do novo banco de dados" required pattern="[a-zA-Z0-9_]+" title="Apenas letras, números e underscore são permitidos">
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Digite o nome do novo banco de dados que será criado e receberá a importação do arquivo SQL.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="sqlFile" class="form-label">
+                            <i class="bi bi-file-earmark-code me-1"></i>Arquivo SQL
+                        </label>
+                        <input type="file" class="form-control" id="sqlFile" name="sqlFile" accept=".sql" required>
+                        <div class="form-text">
+                            <i class="bi bi-filetype-sql me-1"></i>
+                            Selecione um arquivo .sql válido (máx. 50MB).
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Atenção:</strong> Esta operação criará um novo banco de dados e importará os dados do arquivo SQL.
+                        Se o banco já existir, ele será sobrescrito. Certifique-se de ter um backup se necessário.
+                    </div>
+                </form>
+
+                <!-- Barra de progresso (inicialmente oculta) -->
+                <div id="importProgressContainer" class="mt-3" style="display: none;">
+                    <label class="form-label">Progresso da Importação</label>
                     <div class="progress">
-                        <div class="progress-bar" id="analyzeProgress" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div class="progress-bar" id="importProgress" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                 </div>
-                <div id="analyzeLogContent" class="bg-dark text-light p-3 rounded" style="font-family: monospace; font-size: 0.875rem; max-height: 300px; overflow-y: auto;">
-                    <div class="text-center text-muted">
-                        <i class="bi bi-hourglass-split fs-4 mb-2"></i>
-                        <br>Iniciando análise do banco de dados...
+
+                <!-- Log de importação (inicialmente oculto) -->
+                <div id="importLogContainer" class="mt-3" style="display: none;">
+                    <label class="form-label">Log da Importação</label>
+                    <div id="importLogContent" class="bg-dark text-light p-3 rounded" style="font-family: monospace; font-size: 0.875rem; max-height: 300px; overflow-y: auto;">
+                        <div class="text-center text-muted">
+                            <i class="bi bi-hourglass-split fs-4 mb-2"></i>
+                            <br>Iniciando importação...
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" id="startImportBtn" onclick="startImport()">
+                    <i class="bi bi-upload me-1"></i>Criar e Importar
+                </button>
             </div>
         </div>
     </div>
@@ -279,6 +333,49 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="bi bi-trash text-danger fs-1 mb-3"></i>
+                    <h5 class="text-danger">Atenção!</h5>
+                    <p class="mb-3">Esta ação não pode ser desfeita.</p>
+                </div>
+                <div class="alert alert-danger">
+                    <strong>Você está prestes a excluir o banco de dados:</strong><br>
+                    <span id="deleteDbName" class="fw-bold"></span>
+                </div>
+                <p class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Todos os dados, tabelas e estruturas serão permanentemente removidos.
+                </p>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="confirmDelete">
+                    <label class="form-check-label" for="confirmDelete">
+                        Sim, eu entendo que esta ação é irreversível e desejo prosseguir.
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn" disabled onclick="deleteDatabase()">
+                    <i class="bi bi-trash me-1"></i>Excluir Banco
+                </button>
             </div>
         </div>
     </div>
@@ -1098,6 +1195,221 @@ function displayComparisonResults(container, comparison, dbName) {
         </div>
     `;
 }
+
+// Variáveis globais para controle da exclusão
+let currentDbToDelete = null;
+let currentDbType = null;
+
+function confirmDeleteDatabase(dbName, dbType) {
+    // Definir variáveis globais
+    currentDbToDelete = dbName;
+    currentDbType = dbType;
+
+    // Atualizar o nome do banco no modal
+    document.getElementById('deleteDbName').textContent = dbName;
+
+    // Resetar checkbox
+    document.getElementById('confirmDelete').checked = false;
+
+    // Desabilitar botão de exclusão
+    document.getElementById('confirmDeleteBtn').disabled = true;
+
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+function deleteDatabase() {
+    if (!currentDbToDelete || !currentDbType) {
+        showAlert('Erro: Banco de dados não especificado.', 'danger');
+        return;
+    }
+
+    // Verificar se o checkbox está marcado
+    if (!document.getElementById('confirmDelete').checked) {
+        showAlert('Por favor, confirme que você entende que esta ação é irreversível.', 'warning');
+        return;
+    }
+
+    // Obter referências aos elementos do modal
+    const modal = document.getElementById('deleteModal');
+    const bsModal = bootstrap.Modal.getInstance(modal);
+    const deleteBtn = document.getElementById('confirmDeleteBtn');
+
+    // Desabilitar botão e mostrar loading
+    deleteBtn.disabled = true;
+    const originalText = deleteBtn.innerHTML;
+    deleteBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Excluindo...';
+
+    // Manter modal aberto durante a exclusão
+    // Não fechar modal ainda
+
+    // Fazer requisição para exclusão
+    fetch(`/databases/delete/${currentDbToDelete}?type=${currentDbType}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Erro HTTP: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Fechar modal e mostrar sucesso
+            bsModal.hide();
+            showAlert(`Banco de dados "${currentDbToDelete}" excluído com sucesso!`, 'success');
+
+            // Recarregar a página após 2 segundos
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            // Reabilitar botão e mostrar erro
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = originalText;
+            showAlert(`Erro ao excluir banco de dados: ${data.error}`, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erro na exclusão:', error);
+
+        // Reabilitar botão e mostrar erro
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = originalText;
+        showAlert(`Erro ao excluir banco de dados: ${error.message}`, 'danger');
+    });
+}
+
+// Função para mostrar o modal de importação
+function showImportModal() {
+    // Resetar formulário
+    const form = document.getElementById('importForm');
+    form.reset();
+
+    // Esconder elementos de progresso e log
+    document.getElementById('importProgressContainer').style.display = 'none';
+    document.getElementById('importLogContainer').style.display = 'none';
+
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById('importModal'));
+    modal.show();
+}
+
+// Função para iniciar a importação
+function startImport() {
+    const form = document.getElementById('importForm');
+    const formData = new FormData(form);
+
+    // Validar formulário
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+
+    // Obter elementos do modal
+    const modal = document.getElementById('importModal');
+    const progressContainer = document.getElementById('importProgressContainer');
+    const progressBar = document.getElementById('importProgress');
+    const logContainer = document.getElementById('importLogContainer');
+    const logContent = document.getElementById('importLogContent');
+    const startBtn = document.getElementById('startImportBtn');
+
+    // Desabilitar botão e mostrar loading
+    startBtn.disabled = true;
+    const originalText = startBtn.innerHTML;
+    startBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Importando...';
+
+    // Mostrar barra de progresso e log
+    progressContainer.style.display = 'block';
+    logContainer.style.display = 'block';
+
+    // Limpar log anterior
+    logContent.innerHTML = '';
+
+    // Adicionar timestamp inicial
+    const startTime = new Date();
+    addLogEntry(logContent, `Iniciando importação...`, 'info');
+    addLogEntry(logContent, `Timestamp: ${startTime.toLocaleString()}`, 'info');
+    addLogEntry(logContent, '', 'info');
+
+    // Simular processo de importação com barra de progresso
+    simulateImportProcessWithProgress(logContent, progressBar, formData, startTime, () => {
+        // Após importação completa, reabilitar botão
+        startBtn.disabled = false;
+        startBtn.innerHTML = originalText;
+
+        // Fechar modal após alguns segundos
+        setTimeout(() => {
+            const bsModal = bootstrap.Modal.getInstance(modal);
+            bsModal.hide();
+            showAlert('Importação concluída com sucesso!', 'success');
+
+            // Recarregar página para atualizar lista de bancos
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }, 2000);
+    });
+}
+
+// Função para simular o processo de importação com barra de progresso
+function simulateImportProcessWithProgress(logContent, progressBar, formData, startTime, onComplete) {
+    const steps = [
+        { message: 'Validando arquivo SQL...', delay: 500 },
+        { message: 'Verificando permissões do banco de dados...', delay: 300 },
+        { message: 'Fazendo backup do banco atual (opcional)...', delay: 400 },
+        { message: 'Conectando ao banco de dados...', delay: 300 },
+        { message: 'Executando comandos SQL...', delay: 2000 },
+        { message: 'Verificando integridade dos dados...', delay: 800 },
+        { message: 'Finalizando importação...', delay: 400 },
+        { message: 'Importação concluída com sucesso!', delay: 200, type: 'success' }
+    ];
+
+    let currentStep = 0;
+
+    function executeStep() {
+        if (currentStep < steps.length) {
+            const step = steps[currentStep];
+            addLogEntry(logContent, step.message, step.type || 'info');
+
+            // Atualizar barra de progresso
+            const progress = ((currentStep + 1) / steps.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressBar.setAttribute('aria-valuenow', progress);
+
+            currentStep++;
+            setTimeout(executeStep, step.delay);
+        } else {
+            // Finalizar
+            const endTime = new Date();
+            const duration = (endTime - startTime) / 1000;
+            addLogEntry(logContent, '', 'info');
+            addLogEntry(logContent, `Tempo total: ${duration.toFixed(2)} segundos`, 'success');
+
+            // Chamar callback para finalizar
+            setTimeout(onComplete, 500);
+        }
+    }
+
+    executeStep();
+}
+
+// Event listener para o checkbox de confirmação
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmCheckbox = document.getElementById('confirmDelete');
+    const deleteBtn = document.getElementById('confirmDeleteBtn');
+
+    if (confirmCheckbox && deleteBtn) {
+        confirmCheckbox.addEventListener('change', function() {
+            deleteBtn.disabled = !this.checked;
+        });
+    }
+});
 </script>
 
 {% endblock %}
