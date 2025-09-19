@@ -40,7 +40,7 @@
 
                 {% if current_user.username == 'keep' %}
                 <li class="nav-item">
-                    <a class="nav-link nav-link-loader" href="{{ url_for('main.admin') }}" title="Administração">
+                    <a class="nav-link nav-link-loader" href="{{ url_for('admin.admin') }}" title="Administração">
                         <i class="bi bi-shield-check nav-icon-lg"></i>
                     </a>
                 </li>
@@ -52,17 +52,17 @@
                         <span>{{ current_user.username }}</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><a class="dropdown-item nav-link-loader" href="{{ url_for('main.configuracoes') }}">Configurações</a></li>
-                        <li><a class="dropdown-item nav-link-loader" href="{{ url_for('main.perfil') }}">Perfil</a></li>
+                        <li><a class="dropdown-item nav-link-loader" href="{{ url_for('user.configuracoes') }}">Configurações</a></li>
+                        <li><a class="dropdown-item nav-link-loader" href="{{ url_for('user.perfil') }}">Perfil</a></li>
                         {% if current_user.username == 'keep' %}
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item nav-link-loader" href="{{ url_for('main.admin') }}">Administração</a></li>
+                        <li><a class="dropdown-item nav-link-loader" href="{{ url_for('admin.admin') }}">Administração</a></li>
                         {% endif %}
                     </ul>
                 </li>
                 
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('main.logout') }}" title="Sair">
+                    <a class="nav-link" href="{{ url_for('user.logout') }}" title="Sair">
                         <i class="bi bi-box-arrow-right nav-icon-lg"></i>
                     </a>
                 </li>

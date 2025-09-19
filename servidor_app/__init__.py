@@ -9,7 +9,7 @@ import json
 # Instanciar o SQLAlchemy e o LoginManager
 db = SQLAlchemy()
 login_manager = LoginManager()
-login_manager.login_view = 'main.login'
+login_manager.login_view = 'user.login'
 login_manager.login_message_category = 'info'
 login_manager.login_message = 'Por favor, faça login para acessar esta página.'
 
@@ -55,20 +55,26 @@ def create_app(test_config=None):
     # Importar os modelos e blueprints após db ser inicializado para evitar o circular import
     from .models.user_model import User
     from .models.role_model import Role
-    from .controllers.main_controller import main_bp
-    from .controllers.api_controller import api_bp
+    from .controllers.user_controller import user_bp
+    from .controllers.admin_controller import admin_bp
+    from .controllers.database_controller import database_bp
+    from .controllers.file_controller import file_bp
+    from .controllers.system_links_controller import system_bp
     from .controllers.git_api import git_api_bp
-    from .controllers.file_api import file_api_bp
     from .controllers.sync_api import sync_api_bp
-    from .controllers.auth_controller import auth_bp
+    from .controllers.file_api import file_api_bp
+    from .controllers.api_controller import api_bp
 
     # Registrar os Blueprints
-    app.register_blueprint(main_bp)
-    app.register_blueprint(api_bp)
+    app.register_blueprint(user_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(database_bp)
+    app.register_blueprint(file_bp)
+    app.register_blueprint(system_bp)
     app.register_blueprint(git_api_bp)
-    app.register_blueprint(file_api_bp)
     app.register_blueprint(sync_api_bp)
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(file_api_bp)
+    app.register_blueprint(api_bp)
 
     # Import metrics service after app creation
     from .services.metrics_service import metrics_service

@@ -318,7 +318,7 @@ if (backBtn) {
     const allFiles = Array.isArray(pastasData) ? pastasData : [];
     let currentFilteredFiles = [...allFiles];
     let currentLayout = localStorage.getItem('layout') || 'list';
-    let currentFilters = { type: 'all', date: 'all' };
+    let currentFilters = { type: 'all', date: 'all', search: '' };
 
     const fileListContainer = document.getElementById('file-list-container');
     const layoutToggle = document.getElementById('layout-toggle');
@@ -510,6 +510,17 @@ if (backBtn) {
 
             return false;
         });
+
+        // Apply search filter
+        if (currentFilters.search.trim()) {
+            const searchTerm = currentFilters.search.toLowerCase().trim();
+            currentFilteredFiles = currentFilteredFiles.filter(item => {
+                const nameMatch = item.nome.toLowerCase().includes(searchTerm);
+                const pathMatch = item.path.toLowerCase().includes(searchTerm);
+                return nameMatch || pathMatch;
+            });
+        }
+
         renderFiles(currentFilteredFiles);
     };
 
@@ -528,6 +539,37 @@ if (backBtn) {
             filterFiles();
         });
     });
+
+    // Search functionality
+    const clearSearchBtn = document.getElementById('clear-search');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            currentFilters.search = e.target.value;
+            filterFiles();
+
+            // Show/hide clear button
+            if (clearSearchBtn) {
+                if (e.target.value.trim()) {
+                    clearSearchBtn.style.display = 'inline-block';
+                } else {
+                    clearSearchBtn.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', () => {
+            if (searchInput) {
+                searchInput.value = '';
+                currentFilters.search = '';
+                clearSearchBtn.style.display = 'none';
+                filterFiles();
+                searchInput.focus();
+            }
+        });
+    }
 
     applyLayout(currentLayout);
     if (allFiles && allFiles.length > 0) {
@@ -791,7 +833,304 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+
+    // Portal search and filter functionality
+    const portalSearchInput = document.getElementById('portal-search');
+    const portalClearSearch = document.getElementById('clear-search');
+    const portalLinks = document.querySelectorAll('.portal-link');
+    const portalStats = document.getElementById('portal-stats');
+
+    // Function to update portal stats
+    function updatePortalStats() {
+        const visibleLinks = document.querySelectorAll('.portal-link:not(.d-none)');
+        const totalBlocks = document.querySelectorAll('.card.card-elegant').length;
+        const totalLinks = portalLinks.length;
+
+        if (portalStats) {
+            portalStats.innerHTML = `
+                <span class="portal-stats-text">
+                    <i class="bi bi-grid-3x3-gap me-1"></i>
+                    ${totalBlocks} blocos
+                </span>
+                <span class="portal-stats-text">
+                    <i class="bi bi-link-45deg me-1"></i>
+                    ${visibleLinks.length} de ${totalLinks} links
+                </span>
+            `;
+        }
+    }
+
+    // Function to filter portal links
+    function filterPortalLinks(searchTerm) {
+        const term = searchTerm.toLowerCase().trim();
+        let visibleCount = 0;
+
+        portalLinks.forEach(link => {
+            const linkText = link.textContent.toLowerCase();
+            const blockTitle = link.closest('.card')?.querySelector('h2')?.textContent.toLowerCase() || '';
+
+            const isVisible = !term ||
+                linkText.includes(term) ||
+                blockTitle.includes(term);
+
+            if (isVisible) {
+                link.closest('li').classList.remove('d-none');
+                visibleCount++;
+            } else {
+                link.closest('li').classList.add('d-none');
+            }
+        });
+
+        // Hide empty blocks
+        document.querySelectorAll('.card.card-elegant').forEach(block => {
+            const visibleLinksInBlock = block.querySelectorAll('li:not(.d-none)');
+            if (visibleLinksInBlock.length === 0) {
+                block.closest('.col-lg-4, .col-md-6, .col-sm-12').classList.add('d-none');
+            } else {
+                block.closest('.col-lg-4, .col-md-6, .col-sm-12').classList.remove('d-none');
+            }
+        });
+
+        updatePortalStats();
+    }
+
+    // Portal search input handler
+    if (portalSearchInput) {
+        let searchTimeout;
+
+        portalSearchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const searchTerm = this.value;
+
+            // Show/hide clear button
+            if (portalClearSearch) {
+                if (searchTerm.trim()) {
+                    portalClearSearch.style.display = 'inline-block';
+                } else {
+                    portalClearSearch.style.display = 'none';
+                }
+            }
+
+            // Debounce search
+            searchTimeout = setTimeout(() => {
+                filterPortalLinks(searchTerm);
+            }, 300);
+        });
+
+        // Clear search handler
+        if (portalClearSearch) {
+            portalClearSearch.addEventListener('click', function() {
+                portalSearchInput.value = '';
+                portalClearSearch.style.display = 'none';
+                filterPortalLinks('');
+                portalSearchInput.focus();
+            });
+        }
+
+        // Search on Enter key
+        portalSearchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                filterPortalLinks(this.value);
+            }
+        });
+    }
+
+    // Initialize portal stats on page load
+    updatePortalStats();
+
+    // Portal drag-and-drop functionality
+    initializeDragAndDrop();
 });
+
+function initializeDragAndDrop() {
+    const portalContainer = document.querySelector('.row[aria-label="Blocos de sistemas disponíveis"]');
+    if (!portalContainer) return;
+
+    const portalBlocks = portalContainer.querySelectorAll('.col-lg-4, .col-md-6, .col-sm-12');
+    let draggedElement = null;
+    let placeholder = null;
+    let initialOrder = [];
+
+    // Store initial order
+    portalBlocks.forEach((block, index) => {
+        initialOrder.push({
+            id: block.querySelector('.card')?.id || `block-${index}`,
+            element: block
+        });
+    });
+
+    // Load saved order from localStorage
+    loadSavedOrder();
+
+    function loadSavedOrder() {
+        const savedOrder = localStorage.getItem('portal-block-order');
+        if (!savedOrder) return;
+
+        try {
+            const order = JSON.parse(savedOrder);
+            const blocksMap = new Map();
+
+            // Create map of blocks by their content
+            portalBlocks.forEach(block => {
+                const card = block.querySelector('.card');
+                const title = card?.querySelector('h2')?.textContent?.trim();
+                if (title) {
+                    blocksMap.set(title, block);
+                }
+            });
+
+            // Reorder blocks according to saved order
+            const fragment = document.createDocumentFragment();
+            order.forEach(blockTitle => {
+                const block = blocksMap.get(blockTitle);
+                if (block) {
+                    fragment.appendChild(block);
+                    blocksMap.delete(blockTitle);
+                }
+            });
+
+            // Append remaining blocks that weren't in saved order
+            blocksMap.forEach(block => {
+                fragment.appendChild(block);
+            });
+
+            portalContainer.innerHTML = '';
+            portalContainer.appendChild(fragment);
+
+        } catch (error) {
+            console.error('Error loading saved portal order:', error);
+        }
+    }
+
+    function saveOrder() {
+        const currentOrder = [];
+        portalContainer.querySelectorAll('.col-lg-4, .col-md-6, .col-sm-12').forEach(block => {
+            const title = block.querySelector('h2')?.textContent?.trim();
+            if (title) {
+                currentOrder.push(title);
+            }
+        });
+
+        localStorage.setItem('portal-block-order', JSON.stringify(currentOrder));
+    }
+
+    function createPlaceholder(element) {
+        const placeholder = element.cloneNode(true);
+        placeholder.classList.add('drag-placeholder');
+        placeholder.style.opacity = '0.5';
+        placeholder.style.transform = 'scale(0.95)';
+        placeholder.style.pointerEvents = 'none';
+
+        // Remove drag handle and make it non-interactive
+        const dragHandle = placeholder.querySelector('.drag-handle');
+        if (dragHandle) dragHandle.style.display = 'none';
+
+        return placeholder;
+    }
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.col-lg-4, .col-md-6, .col-sm-12:not(.drag-placeholder)')];
+
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    // Add drag event listeners to each block
+    portalBlocks.forEach(block => {
+        const dragHandle = block.querySelector('.drag-handle');
+        if (!dragHandle) return;
+
+        dragHandle.addEventListener('mousedown', startDrag);
+        dragHandle.addEventListener('touchstart', startDrag, { passive: false });
+
+        function startDrag(e) {
+            e.preventDefault();
+
+            draggedElement = block;
+            draggedElement.classList.add('dragging');
+
+            // Create and insert placeholder
+            placeholder = createPlaceholder(block);
+            block.parentNode.insertBefore(placeholder, block.nextSibling);
+
+            // Add global event listeners
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag, { passive: false });
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('touchend', endDrag);
+
+            // Add visual feedback
+            block.style.zIndex = '1000';
+            block.style.position = 'fixed';
+            block.style.pointerEvents = 'none';
+            block.style.transform = 'rotate(5deg) scale(1.05)';
+            block.style.boxShadow = '0 20px 40px rgba(0,0,0,0.3)';
+        }
+    });
+
+    function drag(e) {
+        if (!draggedElement) return;
+
+        e.preventDefault();
+
+        const clientY = e.clientY || (e.touches && e.touches[0]?.clientY);
+        if (!clientY) return;
+
+        const afterElement = getDragAfterElement(portalContainer, clientY);
+
+        if (afterElement == null) {
+            portalContainer.appendChild(placeholder);
+        } else {
+            portalContainer.insertBefore(placeholder, afterElement);
+        }
+
+        // Update dragged element position
+        const rect = placeholder.getBoundingClientRect();
+        draggedElement.style.left = rect.left + 'px';
+        draggedElement.style.top = rect.top + 'px';
+    }
+
+    function endDrag() {
+        if (!draggedElement || !placeholder) return;
+
+        // Remove event listeners
+        document.removeEventListener('mousemove', drag);
+        document.removeEventListener('touchmove', drag);
+        document.removeEventListener('mouseup', endDrag);
+        document.removeEventListener('touchend', endDrag);
+
+        // Replace placeholder with dragged element
+        placeholder.parentNode.replaceChild(draggedElement, placeholder);
+
+        // Reset styles
+        draggedElement.classList.remove('dragging');
+        draggedElement.style.zIndex = '';
+        draggedElement.style.position = '';
+        draggedElement.style.left = '';
+        draggedElement.style.top = '';
+        draggedElement.style.pointerEvents = '';
+        draggedElement.style.transform = '';
+        draggedElement.style.boxShadow = '';
+
+        // Save new order
+        saveOrder();
+
+        // Show success feedback
+        showAlert('Ordem dos blocos atualizada com sucesso!', 'success');
+
+        // Reset variables
+        draggedElement = null;
+        placeholder = null;
+    }
+}
 
 // Database analysis functions
 function analyzeDatabase(dbName) {

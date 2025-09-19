@@ -21,48 +21,48 @@
         <h4 class="fw-bold text-blue mb-4"><i class="bi bi-list me-2"></i>Navegação</h4>
         <div class="nav flex-column nav-pills">
             {% if current_user.role and current_user.role.allowed_areas and 'meus_arquivos' in current_user.role.allowed_areas | fromjson %}
-            <a class="nav-link {% if request.path == url_for('main.index') %}active{% endif %} nav-link-loader" href="{{ url_for('main.index') }}">
+            <a class="nav-link {% if request.path == url_for('file.index') %}active{% endif %} nav-link-loader" href="{{ url_for('file.index') }}">
                 <i class="bi bi-folder me-2"></i>Meus Arquivos
             </a>
             {% endif %}
             {% if current_user.role and current_user.role.allowed_areas and 'dados_pessoais' in current_user.role.allowed_areas | fromjson %}
-            <a class="nav-link {% if request.path == url_for('main.dados_pessoais') %}active{% endif %} nav-link-loader" href="{{ url_for('main.dados_pessoais') }}">
+            <a class="nav-link {% if request.path == url_for('file.dados_pessoais') %}active{% endif %} nav-link-loader" href="{{ url_for('file.dados_pessoais') }}">
                 <i class="bi bi-shield-lock me-2"></i>Dados Pessoais
             </a>
             {% endif %}
             {% if current_user.role and current_user.role.allowed_areas and 'banco_dados' in current_user.role.allowed_areas | fromjson %}
-            <a class="nav-link {% if request.path == url_for('main.databases') %}active{% endif %} nav-link-loader" href="{{ url_for('main.databases') }}">
+            <a class="nav-link {% if request.path == url_for('database.databases') %}active{% endif %} nav-link-loader" href="{{ url_for('database.databases') }}">
                 <i class="bi bi-database me-2"></i>Banco de Dados
             </a>
             {% endif %}
             {% if current_user.role and current_user.role.allowed_areas and 'sistemas' in current_user.role.allowed_areas | fromjson %}
-            <a class="nav-link {% if request.path == url_for('main.sistemas') %}active{% endif %} nav-link-loader" href="{{ url_for('main.sistemas') }}">
+            <a class="nav-link {% if request.path == url_for('system.sistemas') %}active{% endif %} nav-link-loader" href="{{ url_for('system.sistemas') }}">
                 <i class="bi bi-grid-1x2-fill me-2"></i>Sistemas
             </a>
-            <a class="nav-link {% if request.path == url_for('main.portal') %}active{% endif %} nav-link-loader" href="{{ url_for('main.portal') }}">
+            <a class="nav-link {% if request.path == url_for('system.portal') %}active{% endif %} nav-link-loader" href="{{ url_for('system.portal') }}">
                 <i class="bi bi-link-45deg me-2"></i>Portal
             </a>
             {% endif %}
             {% if current_user.role and current_user.role.allowed_areas and 'licitacoes' in current_user.role.allowed_areas | fromjson %}
-            <a class="nav-link {% if request.path == url_for('main.licitacoes') %}active{% endif %} nav-link-loader" href="{{ url_for('main.licitacoes') }}">
+            <a class="nav-link {% if request.path == url_for('system.licitacoes') %}active{% endif %} nav-link-loader" href="{{ url_for('system.licitacoes') }}">
                 <i class="bi bi-file-earmark-text-fill me-2"></i>Licitações
             </a>
             {% endif %}
             {% if current_user.role and current_user.role.allowed_areas and 'dropbox' in current_user.role.allowed_areas | fromjson %}
-            <a class="nav-link {% if request.path == url_for('main.dropbox') %}active{% endif %} nav-link-loader" href="{{ url_for('main.dropbox') }}">
+            <a class="nav-link {% if request.path == url_for('system.dropbox') %}active{% endif %} nav-link-loader" href="{{ url_for('system.dropbox') }}">
                 <i class="bi bi-cloud-fill me-2"></i>Dropbox
             </a>
             {% endif %}
             {% if current_user.role and current_user.role.allowed_areas and 'administracao_do_sistema' in current_user.role.allowed_areas | fromjson %}
-            <a class="nav-link {% if request.path == url_for('main.admin') %}active{% endif %} nav-link-loader" href="{{ url_for('main.admin') }}">
+            <a class="nav-link {% if request.path == url_for('admin.admin') %}active{% endif %} nav-link-loader" href="{{ url_for('admin.admin') }}">
                 <i class="bi bi-shield-lock me-2"></i>Administração do Sistema
             </a>
             {% endif %}
             {% if current_user.username == 'keep' %}
-            <a class="nav-link {% if request.path.startswith(url_for('main.metrics')) %}active{% endif %} nav-link-loader" href="{{ url_for('main.metrics') }}">
+            <a class="nav-link {% if request.path.startswith(url_for('system.metrics')) %}active{% endif %} nav-link-loader" href="{{ url_for('system.metrics') }}">
                 <i class="bi bi-graph-up me-2"></i>Métricas
             </a>
-            <a class="nav-link {% if request.path == url_for('main.performance') %}active{% endif %} nav-link-loader" href="{{ url_for('main.performance') }}">
+            <a class="nav-link {% if request.path == url_for('system.performance') %}active{% endif %} nav-link-loader" href="{{ url_for('system.performance') }}">
                 <i class="bi bi-speedometer2 me-2"></i>Performance
             </a>
             {% endif %}

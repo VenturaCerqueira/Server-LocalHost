@@ -82,7 +82,7 @@ def git_status():
         current_app.logger.error(f"Erro no git status: {e}")
         return jsonify({"error": f"Erro interno no git status: {str(e)}"}), 500
 
-@git_api_bp.route('/git_merge_abort', methods=['POST'])
+@git_api_bp.route('/api/git_merge_abort', methods=['POST'])
 def git_merge_abort():
     try:
         data = request.get_json()
@@ -107,7 +107,7 @@ def git_merge_abort():
         current_app.logger.error(f"Erro no git merge --abort: {e}")
         return jsonify({"error": f"Erro interno no git merge --abort: {str(e)}"}), 500
 
-@git_api_bp.route('/git_clone', methods=['GET', 'POST'])
+@git_api_bp.route('/api/git_clone', methods=['GET', 'POST'])
 def git_clone():
     from flask import Response
     try:

@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Editar Link' if link else 'Adicionar Link ao Portal' }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">{{ 'Editar Link' if link else 'Adicionar Novo Link' }}</h6>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Nome do Link</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ link.name if link else '' }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="url" class="form-label">URL</label>
+                            <input type="url" class="form-control" id="url" name="url" value="{{ link.url if link else '' }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="block" class="form-label">Bloco (Opcional)</label>
+                            <div class="input-group">
+                                <select class="form-select" id="block" name="block">
+                                    <option value="">Selecione um bloco...</option>
+                                    {% for block in distinct_blocks %}
+                                        <option value="{{ block }}" {% if link and link.block == block %}selected{% endif %}>{{ block }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#addBlockModal">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="icon" class="form-label">Ícone (Classe Bootstrap Icons)</label>
+                            <input type="text" class="form-control" id="icon" name="icon" placeholder="Ex: bi bi-house" value="{{ link.icon if link else '' }}">
+                            <small class="form-text text-muted">Use classes do Bootstrap Icons. Exemplo: <code>bi bi-house</code></small>
+
+                            <div class="mt-2">
+                                <small class="text-muted">Ícones populares:</small>
+                                <div class="d-flex flex-wrap gap-2 mt-1">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary icon-option" data-icon="bi bi-house">
+                                        <i class="bi bi-house"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary icon-option" data-icon="bi bi-gear">
+                                        <i class="bi bi-gear"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary icon-option" data-icon="bi bi-people">
+                                        <i class="bi bi-people"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary icon-option" data-icon="bi bi-graph-up">
+                                        <i class="bi bi-graph-up"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary icon-option" data-icon="bi bi-file-earmark-text">
+                                        <i class="bi bi-file-earmark-text"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary icon-option" data-icon="bi bi-database">
+                                        <i class="bi bi-database"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary icon-option" data-icon="bi bi-shield-lock">
+                                        <i class="bi bi-shield-lock"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary icon-option" data-icon="bi bi-envelope">
+                                        <i class="bi bi-envelope"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary icon-option" data-icon="bi bi-calendar">
+                                        <i class="bi bi-calendar"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary icon-option" data-icon="bi bi-chat-dots">
+                                        <i class="bi bi-chat-dots"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary icon-option" data-icon="bi bi-link-45deg">
+                                        <i class="bi bi-link-45deg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('system.portal') }}" class="btn btn-secondary me-md-2">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">{{ 'Atualizar Link' if link else 'Adicionar Link' }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Block Modal -->
+<div class="modal fade" id="addBlockModal" tabindex="-1" aria-labelledby="addBlockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addBlockModalLabel">
+                    <i class="bi bi-plus-circle me-2"></i>Adicionar Novo Bloco
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newBlockName" class="form-label">Nome do Bloco</label>
+                    <input type="text" class="form-control" id="newBlockName" placeholder="Ex: Admin, Geral, etc." required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ícone do Bloco</label>
+                    <small class="form-text text-muted">Selecione um ícone para representar o bloco</small>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option active" data-icon="bi bi-folder">
+                            <i class="bi bi-folder"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-gear">
+                            <i class="bi bi-gear"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-people">
+                            <i class="bi bi-people"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-graph-up">
+                            <i class="bi bi-graph-up"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-file-earmark-text">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-database">
+                            <i class="bi bi-database"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-shield-lock">
+                            <i class="bi bi-shield-lock"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-envelope">
+                            <i class="bi bi-envelope"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-calendar">
+                            <i class="bi bi-calendar"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-chat-dots">
+                            <i class="bi bi-chat-dots"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-link-45deg">
+                            <i class="bi bi-link-45deg"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary block-icon-option" data-icon="bi bi-house">
+                            <i class="bi bi-house"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="addBlockBtn">Adicionar Bloco</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

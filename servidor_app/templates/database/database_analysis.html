@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Análise do Banco: {{ db_name }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/custom_buttons.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/database_analysis.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="analysis-container">
+        <div class="download-links header-links">
+            <a href="{{ markdown_url }}" class="btn btn-success" target="_blank" style="order: 2;">
+                <i class="bi bi-download me-2"></i> Baixar Documento
+            </a>
+            <a href="{{ url_for('database.databases') }}" class="btn btn-outline-primary" style="order: 1;">
+                <i class="bi bi-arrow-left"></i>
+                Voltar
+            </a>
+        </div>
+
+        <div class="analysis-header">
+            <h1>Análise do Banco: {{ db_name }}</h1>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong>Erro na Análise:</strong> {{ error }}
+        </div>
+        {% else %}
+
+        <!-- Estrutura das Tabelas -->
+        {% for table in tables %}
+        <div class="analysis-section">
+            <h2><i class="bi bi-table me-2"></i>Tabela {{ loop.index }}: {{ table.name }}</h2>
+            <div class="table-card">
+                <div class="table-header">
+                    <span class="table-category badge" style="background-color: {{ table.color }};">{{ table.category }}</span>
+                </div>
+                <div class="table-metadata-badges">
+                    <span class="badge bg-primary me-2 mb-2">
+                        <i class="bi bi-hdd me-1"></i>{{ table.metadata.engine or 'N/A' }}
+                    </span>
+                    <span class="badge bg-success me-2 mb-2">
+                        <i class="bi bi-file-earmark-bar-graph me-1"></i>{{ table.metadata.table_rows | default(0) | number_format }} linhas
+                    </span>
+                    <span class="badge bg-info me-2 mb-2">
+                        <i class="bi bi-database me-1"></i>{{ table.metadata.size_mb | default(0) | round(2) }} MB
+                    </span>
+                    {% if table.metadata.create_time %}
+                    <span class="badge bg-warning text-dark me-2 mb-2">
+                        <i class="bi bi-calendar-plus me-1"></i>Criado: {{ table.metadata.create_time }}
+                    </span>
+                    {% endif %}
+                </div>
+        <div class="table-columns">
+            <h5><i class="bi bi-list-columns me-1"></i>Colunas</h5>
+            <div class="list-group">
+                {% for col in table.columns %}
+                <div class="list-group-item flex-column align-items-start">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1 column-name">{{ col.column_name }}</h5>
+                        <small class="text-muted">{{ col.column_type }}</small>
+                    </div>
+                    <p class="mb-1">
+                        <span><i class="bi bi-key-fill me-1"></i><strong>Chave:</strong> {% if col.column_key == 'PRI' %}PK{% else %} - {% endif %}</span> |
+                        <span><i class="bi bi-toggle-on me-1"></i><strong>Nulo?</strong> {% if col.is_nullable == 'YES' %}Sim{% else %}Não{% endif %}</span> |
+                        <span><i class="bi bi-slash-circle me-1"></i><strong>Padrão:</strong> {{ col.column_default if col.column_default is not none else '-' }}</span>
+                    </p>
+                    <small class="text-muted">
+                        {% if col.column_comment %}
+                        <i class="bi bi-chat-left-text me-1"></i>Comentário: {{ col.column_comment }}<br>
+                        {% endif %}
+                        {% if col.referenced_table_name %}
+                        <i class="bi bi-arrow-right me-1"></i>Referência FK: {{ col.referenced_table_name }}.{{ col.referenced_column_name }}
+                        {% endif %}
+                    </small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- AI Insights Section -->
+        {% if ai_insights and ai_insights != 'error' %}
+        <div class="analysis-section">
+            <h2><i class="bi bi-robot me-2"></i>Insights de IA</h2>
+            {% for table_name, insights in ai_insights.items() %}
+            <div class="table-card">
+                <div class="table-header">
+                    <span class="table-name">{{ table_name }}</span>
+                </div>
+                <div class="table-metadata">
+                    {% if insights.description %}
+                    <div class="metadata-item">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Descrição:</strong> {{ insights.description }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% if insights.column_insights and insights.column_insights != 'error' %}
+                <div class="table-columns">
+                    <h5><i class="bi bi-list-columns me-1"></i>Insights das Colunas</h5>
+                    <table class="columns-table">
+                        <thead>
+                            <tr>
+                                <th>Nome da Coluna</th>
+                                <th>Insight</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for col_name, col_insight in insights.column_insights.items() %}
+                            <tr>
+                                <td><span class="column-name">{{ col_name }}</span></td>
+                                <td><span class="column-comment">{{ col_insight }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% elif ai_insights == 'error' %}
+        <div class="analysis-section">
+            <h2><i class="bi bi-exclamation-triangle me-2"></i>Insights de IA</h2>
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <strong>Análise de IA Indisponível:</strong> Não foi possível gerar insights automáticos para este banco de dados. Isso pode ser devido à configuração da API do Google Gemini ou limitações de taxa.
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Diagrama ERD -->
+        <div class="analysis-section">
+            <h2><i class="bi bi-diagram-3 me-2"></i>Diagrama de Entidade-Relacionamento (ERD)</h2>
+            <div class="download-links">
+                <a href="{{ erd_png_url }}" target="_blank">
+                    <i class="bi bi-image"></i>
+                    Baixar ERD (PNG)
+                </a>
+                <a href="{{ erd_svg_url }}" target="_blank">
+                    <i class="bi bi-filetype-svg"></i>
+                    Baixar ERD (SVG)
+                </a>
+            </div>
+            <div class="diagram-container">
+                <div style="width: 100%; overflow-x: auto; border: 1px solid #ddd; border-radius: 8px; background: white;">
+                    <img src="{{ erd_png_url }}" alt="ERD Diagram" style="max-width: 100%; height: auto;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Fluxo de Dados -->
+        <div class="analysis-section">
+            <h2><i class="bi bi-graph-up me-2"></i>Fluxo de Dados por Categoria</h2>
+            <div class="download-links">
+                <a href="{{ flow_png_url }}" target="_blank">
+                    <i class="bi bi-image"></i>
+                    Baixar Fluxo (PNG)
+                </a>
+                <a href="{{ flow_svg_url }}" target="_blank">
+                    <i class="bi bi-filetype-svg"></i>
+                    Baixar Fluxo (SVG)
+                </a>
+            </div>
+            <div class="diagram-container">
+                <div style="width: 100%; overflow-x: auto; border: 1px solid #ddd; border-radius: 8px; background: white;">
+                    <img src="{{ flow_png_url }}" alt="Data Flow Diagram" style="max-width: 100%; height: auto;">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
